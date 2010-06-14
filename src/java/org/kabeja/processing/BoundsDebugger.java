@@ -1,176 +1,172 @@
-/*
-   Copyright 2005 Simon Mieth
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
 package org.kabeja.processing;
 
-import java.util.Iterator;
 import java.util.Map;
 
-import org.kabeja.dxf.Bounds;
-import org.kabeja.dxf.DXF3DFace;
-import org.kabeja.dxf.DXFBlock;
-import org.kabeja.dxf.DXFDocument;
-import org.kabeja.dxf.DXFEntity;
-import org.kabeja.dxf.DXFLayer;
-import org.kabeja.dxf.DXFText;
-
+import org.kabeja.DraftDocument;
+import org.kabeja.common.Block;
+import org.kabeja.common.DraftEntity;
+import org.kabeja.common.Layer;
+import org.kabeja.common.Type;
+import org.kabeja.entities.Face3D;
+import org.kabeja.entities.Text;
+import org.kabeja.math.Bounds;
 
 /**
  * @author <a href="mailto:simon.mieth@gmx.de">Simon Mieth</a>
- *
+ * 
  */
 public class BoundsDebugger extends AbstractPostProcessor {
-    public static final String LAYER_NAME = "kabeja_bounds_debug";
+	public static final String LAYER_NAME = "kabeja_bounds_debug";
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see de.miethxml.kabeja.tools.PostProcessor#process(de.miethxml.kabeja.dxf.DXFDocument)
-     */
-    public void process(DXFDocument doc, Map context) throws ProcessorException {
-        //set all blocks to color gray
-        Iterator i = doc.getDXFBlockIterator();
+	public void process(DraftDocument doc, Map context)
+			throws ProcessorException {
 
-        while (i.hasNext()) {
-            DXFBlock b = (DXFBlock) i.next();
-            Iterator ie = b.getDXFEntitiesIterator();
+		// get or create the debug layer
+		Layer layer = null;
+		if (doc.containsLayer(LAYER_NAME)) {
+			layer = doc.getLayer(LAYER_NAME);
+		} else {
+			layer = new Layer();
+			layer.setName(LAYER_NAME);
+			doc.addLayer(layer);
+		}
 
-            while (ie.hasNext()) {
-                DXFEntity entity = (DXFEntity) ie.next();
+		// set all blocks to color gray
+		for (Block b : doc.getBlocks()) {
+			for (DraftEntity entity : b.getEntities()) {
+				// set to gray
+				entity.setColor(9);
+			}
+		}
 
-                //set to gray
-                entity.setColor(9);
-            }
-        }
+		DraftEntity left = null;
+		DraftEntity top = null;
+		DraftEntity right = null;
+		DraftEntity bottom = null;
 
-        DXFEntity left = null;
-        DXFEntity top = null;
-        DXFEntity right = null;
-        DXFEntity bottom = null;
+		Bounds b = doc.getBounds();
+		double x = b.getMinimumX() + (b.getWidth() / 2);
+		double y = b.getMinimumY() + (b.getHeight() / 2);
 
-        Bounds b = doc.getBounds();
-        double x = b.getMinimumX() + (b.getWidth() / 2);
-        double y = b.getMinimumY() + (b.getHeight() / 2);
+		// starting at the center point of the draft
+		Bounds lBounds = new Bounds(x, x, y, y);
+		Bounds rBounds = new Bounds(x, x, y, y);
+		Bounds tBounds = new Bounds(x, x, y, y);
+		Bounds bBounds = new Bounds(x, x, y, y);
 
-        //starting at the center point of the draft
-        Bounds lBounds = new Bounds(x, x, y, y);
-        Bounds rBounds = new Bounds(x, x, y, y);
-        Bounds tBounds = new Bounds(x, x, y, y);
-        Bounds bBounds = new Bounds(x, x, y, y);
+		for (Layer l : doc.getLayers()) {
 
-        i = doc.getDXFLayerIterator();
+			// set color to gray
+			l.setColor(8);
 
-        while (i.hasNext()) {
-            DXFLayer l = (DXFLayer) i.next();
+			for (Type<? extends DraftEntity> type : l.getEntityTypes()) {
+				for (DraftEntity entity : l.getEntitiesByType(type)) {
+					// set to gray
+					entity.setColor(8);
+					Bounds currentBounds = entity.getBounds();
 
-            //set color to gray
-            l.setColor(8);
+					if (currentBounds.isValid()) {
+						if (currentBounds.getMinimumX() <= lBounds
+								.getMinimumX()) {
+							lBounds = currentBounds;
+							left = entity;
+						}
 
-            Iterator ti = l.getDXFEntityTypeIterator();
+						if (currentBounds.getMinimumY() <= bBounds
+								.getMinimumY()) {
+							bBounds = currentBounds;
+							bottom = entity;
+						}
 
-            while (ti.hasNext()) {
-                String type = (String) ti.next();
-                Iterator ei = l.getDXFEntities(type).iterator();
+						if (currentBounds.getMaximumX() >= rBounds
+								.getMaximumX()) {
+							rBounds = currentBounds;
+							right = entity;
+						}
 
-                while (ei.hasNext()) {
-                    DXFEntity entity = (DXFEntity) ei.next();
+						if (currentBounds.getMaximumY() >= tBounds
+								.getMaximumY()) {
+							tBounds = currentBounds;
+							top = entity;
+						}
+					}
+				}
+			}
+		}
 
-                    //set to gray
-                    entity.setColor(8);
+		// left -> red
+		left.setColor(0);
+		addBounds(lBounds, doc, 0, left.getType() + "=" + left.getID(), layer);
 
-                    Bounds currentBounds = entity.getBounds();
+		// right -> green
+		right.setColor(2);
+		addBounds(rBounds, doc, 2, right.getType() + "=" + right.getID(), layer);
 
-                    if (currentBounds.isValid()) {
-                        if (currentBounds.getMinimumX() <= lBounds.getMinimumX()) {
-                            lBounds = currentBounds;
-                            left = entity;
-                        }
+		// bottom blue
+		bottom.setColor(4);
+		addBounds(bBounds, doc, 4, bottom.getType() + "=" + bottom.getID(),
+				layer);
 
-                        if (currentBounds.getMinimumY() <= bBounds.getMinimumY()) {
-                            bBounds = currentBounds;
-                            bottom = entity;
-                        }
+		// top color -> magenta
+		top.setColor(5);
+		addBounds(tBounds, doc, 5, top.getType() + "=" + top.getID(), layer);
 
-                        if (currentBounds.getMaximumX() >= rBounds.getMaximumX()) {
-                            rBounds = currentBounds;
-                            right = entity;
-                        }
+		// the color -> magenta
+		top.setColor(5);
+		addBounds(b, doc, 6, "ALL", layer);
+	}
 
-                        if (currentBounds.getMaximumY() >= tBounds.getMaximumY()) {
-                            tBounds = currentBounds;
-                            top = entity;
-                        }
-                    }
-                }
-            }
-        }
+	protected void addBounds(Bounds bounds, DraftDocument doc, int color,
+			String type, Layer layer) {
+		Face3D face = new Face3D();
+		face.getPoint1().setX(bounds.getMinimumX());
+		face.getPoint1().setY(bounds.getMinimumY());
 
-        //left -> red
-        left.setColor(0);
-        addBounds(lBounds, doc, 0, left.getType() + "=" + left.getID());
+		face.getPoint2().setX(bounds.getMinimumX());
+		face.getPoint2().setY(bounds.getMaximumY());
 
-        //right -> green
-        right.setColor(2);
-        addBounds(rBounds, doc, 2, right.getType() + "=" + right.getID());
+		face.getPoint3().setX(bounds.getMaximumX());
+		face.getPoint3().setY(bounds.getMaximumY());
 
-        //bottom blue
-        bottom.setColor(4);
-        addBounds(bBounds, doc, 4, bottom.getType() + "=" + bottom.getID());
+		face.getPoint4().setX(bounds.getMaximumX());
+		face.getPoint4().setY(bounds.getMinimumY());
 
-        //top color -> magenta
-        top.setColor(5);
-        addBounds(tBounds, doc, 5, top.getType() + "=" + top.getID());
+		face.setColor(color);
+		face.setLayer(layer);
 
-        //the  color -> magenta
-        top.setColor(5);
-        addBounds(b, doc, 6, "ALL");
-    }
+		doc.addEntity(face);
 
-    protected void addBounds(Bounds bounds, DXFDocument doc, int color,
-        String type) {
-        DXF3DFace face = new DXF3DFace();
-        face.getPoint1().setX(bounds.getMinimumX());
-        face.getPoint1().setY(bounds.getMinimumY());
+		Text t = new Text();
+		t.setDocument(doc);
+		t.setText("DEBUG-" + type);
+		t.getInsertPoint().setX(bounds.getMinimumX());
+		t.getInsertPoint().setY(bounds.getMaximumY());
+		t.setColor(color);
+		t.setLayer(layer);
+		doc.addEntity(t);
+	}
 
-        face.getPoint2().setX(bounds.getMinimumX());
-        face.getPoint2().setY(bounds.getMaximumY());
-
-        face.getPoint3().setX(bounds.getMaximumX());
-        face.getPoint3().setY(bounds.getMaximumY());
-
-        face.getPoint4().setX(bounds.getMaximumX());
-        face.getPoint4().setY(bounds.getMinimumY());
-
-        face.setColor(color);
-        face.setLayerName(LAYER_NAME);
-
-        doc.addDXFEntity(face);
-
-        DXFText t = new DXFText();
-        t.setDXFDocument(doc);
-        t.setText("DEBUG-" + type);
-        t.getInsertPoint().setX(bounds.getMinimumX());
-        t.getInsertPoint().setY(bounds.getMaximumY());
-        t.setColor(color);
-        t.setLayerName(LAYER_NAME);
-        doc.addDXFEntity(t);
-    }
-
-    /* (non-Javadoc)
-     * @see org.kabeja.tools.PostProcessor#setProperties(java.util.Map)
-     */
-    public void setProperties(Map properties) {
-    }
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.kabeja.tools.PostProcessor#setProperties(java.util.Map)
+	 */
+	public void setProperties(Map properties) {
+	}
 }

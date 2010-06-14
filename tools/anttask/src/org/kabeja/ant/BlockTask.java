@@ -1,37 +1,40 @@
-/*
-   Copyright 2008 Simon Mieth
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
 package org.kabeja.ant;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.taskdefs.Ant;
 
-
 public class BlockTask extends Ant {
     protected final static String SEPARATOR = ",";
-    protected List blocks = new ArrayList();
+
     protected String blockDirectory;
+
     protected String target = "dist";
 
     public void setBlockDir(String blockdir) {
@@ -51,18 +54,37 @@ public class BlockTask extends Ant {
 
         File[] dirs = f.listFiles();
 
+        Map blocks = new HashMap();
         for (int i = 0; i < dirs.length; i++) {
             if (dirs[i].isDirectory()) {
-                setupBlock(dirs[i]);
+                File buildFile = new File(dirs[i], "build.xml");
+
+                if (buildFile.exists()) {
+                    log("Setup block:" + dirs[i].getName());
+
+                    Block b = setupBlock(dirs[i], buildFile);
+                    blocks.put(b.getName(), b);
+                } else {
+                    log("Omit module dir:" + dirs[i].getName()
+                            + " not build.xml found");
+                }
+
             }
         }
 
         // setup the properties
-        getProject()
-            .setUserProperty("kabeja.home",
-            getProject().getBaseDir().getAbsolutePath());
+        getProject().setUserProperty("kabeja.home",
+                getProject().getBaseDir().getAbsolutePath());
 
-        buildBlocks();
+        List buildOrder = resolveDependency(blocks);
+        log("Build " + buildOrder.size() + " blocks in the following order");
+        Iterator i = buildOrder.iterator();
+        while (i.hasNext()) {
+            Block b = (Block) i.next();
+            log("Block:" + b);
+        }
+
+        buildBlocks(buildOrder);
 
         // log(this.getProject().getBaseDir().getAbsolutePath());
     }
@@ -71,47 +93,102 @@ public class BlockTask extends Ant {
         return super.getTaskName();
     }
 
-    protected void setupBlock(File dir) throws BuildException {
+    protected Block setupBlock(File dir, File buildFile) throws BuildException {
+
         Hashtable props = getProject().getProperties();
-        File buildFile = new File(dir, "build.xml");
 
-        if (buildFile.exists()) {
-            log("Setup block:" + dir.getName());
+        Block b = new Block(dir.getName(), buildFile.getAbsolutePath());
 
-            Block b = new Block(dir.getName(), buildFile.getAbsolutePath());
-
-            if (props.containsKey(("block." + dir.getName() + ".dependency"))) {
-                String dep = (String) props.get("block." + dir.getName() +
-                        ".dependency");
-                handleDependency(dep, b);
-            }
-
-            if (props.containsKey("block." + dir.getName())) {
-                b.setEnabled(Boolean.valueOf(
-                        (((String) props.get("block." + dir.getName())).trim()))
-                                    .booleanValue());
-                addBlock(b);
-            } else {
-                log("Block:" + dir.getName() + " not configured.");
-            }
+        if (props.containsKey(("block." + dir.getName() + ".dependency"))) {
+            String dep = (String) props.get("block." + dir.getName()
+                    + ".dependency");
+            handleDependency(dep, b);
         }
+
+        if (props.containsKey("block." + dir.getName())) {
+            b.setEnabled(Boolean.valueOf(
+                    (((String) props.get("block." + dir.getName())).trim()))
+                    .booleanValue());
+
+        } else {
+            log("Block:" + dir.getName() + " not configured.");
+        }
+
+        return b;
+
     }
 
     protected void handleDependency(String dependency, Block block) {
         if (dependency.length() > 0) {
-            log("\tBlock " + block.getName() + " depence on:" + dependency);
-
             StringTokenizer st = new StringTokenizer(dependency, SEPARATOR);
 
             while (st.hasMoreTokens()) {
                 String dep = st.nextToken();
-                block.addDependency(dep);
+                block.addDependency(dep.trim());
             }
         }
     }
 
-    protected void buildBlocks() {
-        Iterator i = this.blocks.iterator();
+    protected List resolveDependency(Map blocks) {
+        List buildOrder = new ArrayList();
+        Set inserted = new HashSet();
+        Iterator i = blocks.values().iterator();
+        while (i.hasNext()) {
+            Block b = (Block) i.next();
+            if (b.isEnabled()) {
+                Iterator di = resolveDependency(b, blocks).iterator();
+                while (di.hasNext()) {
+                    String block = (String) di.next();
+                    if (inserted.contains(block)) {
+                        log("omit Block:" + block + " inserted berfore");
+                    } else {
+                        buildOrder.add(blocks.get(block));
+                        inserted.add(block);
+                        log("Add block:" + block + " for dependency of "
+                                + b.getName());
+                    }
+                }
+                if (!inserted.contains(b.getName())) {
+                    buildOrder.add(b);
+                    inserted.add(b.getName());
+                }
+            }
+
+        }
+        return buildOrder;
+    }
+
+    protected List resolveDependency(Block b, Map blocks) {
+        List list = new ArrayList();
+        log("Resolve dependency for:" + b.getName());
+        Iterator i = b.getDependencies().iterator();
+        while (i.hasNext()) {
+            String dependency = ((String) i.next()).trim();
+
+            Block dep = (Block) blocks.get(dependency.trim());
+            List blocksBefore = resolveDependency(dep, blocks);
+            Iterator di = blocksBefore.iterator();
+            while (di.hasNext()) {
+                String name = (String) di.next();
+                if (name.equals(b.getName())) {
+                    throw new BuildException("Unresolved Dependency Block:"
+                            + b.getName() + " depends on:" + dependency
+                            + " which depends on:" + b.getName()
+                            + ", fix the dependency");
+                } else {
+                    list.add(name);
+                }
+
+            }
+            list.add(dependency);
+        }
+
+        return list;
+    }
+
+    protected void buildBlocks(List blocks) {
+
+        Iterator i = blocks.iterator();
 
         while (i.hasNext()) {
             Block b = (Block) i.next();
@@ -121,52 +198,21 @@ public class BlockTask extends Ant {
                 setAntfile(b.getBuildFile());
                 setDir(f.getParentFile());
                 super.setTarget(this.target);
-                log("  Process block:" + b.getName() + " Target:" +
-                    this.target);
+                log("Process block:" + b.getName() + " Target:" + this.target);
                 super.execute();
             } else {
-                log("  Omit block:" + b.getName());
+                log("Omit block:" + b.getName());
             }
-        }
-    }
-
-    protected void addBlock(Block block) throws BuildException {
-        if (!block.hasDependency()) {
-            this.blocks.add(0, block);
-        } else {
-            for (int i = blocks.size() - 1; i >= 0; i++) {
-                Block b = (Block) this.blocks.get(i);
-
-                if (b.dependsOn(block.getName())) {
-                    // check circle dependency
-                    if (block.dependsOn(b.getName())) {
-                        throw new BuildException(
-                            "Cannot handle circle refernce of the blocks " +
-                            b.getName() + "<-> " + block.getName());
-                    }
-                } else if (block.dependsOn(b.getName())) {
-                    // insert after this block
-                    this.blocks.add(i + 1, block);
-                    // setup the enable state
-                    block.setEnabled(b.isEnabled());
-
-                    return;
-                } else {
-                    // add block here
-                    this.blocks.add(i, block);
-
-                    return;
-                }
-            }
-
-            this.blocks.add(block);
         }
     }
 
     private class Block {
         String name;
+
         String buildFile;
+
         Set dependency = new HashSet();
+
         boolean build;
 
         public Block(String name, String buildfile) {
@@ -200,6 +246,27 @@ public class BlockTask extends Ant {
 
         public void setEnabled(boolean b) {
             this.build = b;
+        }
+
+        public Set getDependencies() {
+            return this.dependency;
+        }
+
+        public String toString() {
+            StringBuffer buf = new StringBuffer();
+            buf.append(this.name);
+            if (this.dependency.size() > 0) {
+                buf.append("[depends on:");
+                Iterator i = dependency.iterator();
+                while (i.hasNext()) {
+                    buf.append(i.next());
+                    if (i.hasNext()) {
+                        buf.append(",");
+                    }
+                }
+                buf.append("]");
+            }
+            return buf.toString();
         }
     }
 }

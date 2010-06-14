@@ -21,8 +21,8 @@
 	<property name="JarClassPath" value="" />
 	<property name="tempdir" value="tmp" />
 	<property name="tools" value="tools" />
-	<property name="legal" value="legal"/>
-	<property name="block.mainclass" value="org.kabeja.ui.viewer.Main"/>
+	<property name="legal" value="legal" />
+	<property name="block.mainclass" value="org.kabeja.ui.viewer.Main" />
 	<property name="debug" value="on" />
 
 
@@ -50,7 +50,8 @@
 	</target>
 
 	<target name="compile" depends="init">
-		<javac srcdir="${src}" destdir="${build}/${classes}" target="${java.target.version}" debug="${debug}" source="${java.target.version}">
+		<javac srcdir="${src}" destdir="${build}/${classes}" target="${java.target.version}"
+			debug="${debug}" source="${java.target.version}">
 			<classpath>
 				<pathelement path="${classpath}" />
 				<fileset dir="${block.libs}">
@@ -59,7 +60,10 @@
 				<fileset dir="${kabeja.home}/${libs}">
 					<include name="**/*.jar" />
 				</fileset>
-				<dirset dir="${kabeja.home}/${build}/${classes}"/>
+				<fileset dir="${kabeja.home}/${dist}/${libs}">
+					<include name="**/*.jar" />
+				</fileset>
+				<dirset dir="${kabeja.home}/${build}/${classes}" />
 
 			</classpath>
 		</javac>
@@ -80,14 +84,15 @@
 			</fileset>
 		</copy>
 		<!-- the libraries licenses -->
-		<mkdir dir="${kabeja.home}/${dist}/${legal}"/>
+		<mkdir dir="${kabeja.home}/${dist}/${legal}" />
 		<copy todir="${kabeja.home}/${dist}/${legal}">
 			<fileset dir="${legal}">
-						<include name="**/*" />
+				<include name="**/*" />
 			</fileset>
 		</copy>
 
-		<jar jarfile="${kabeja.home}/${dist}/${libs}/${block.releasename}.jar" basedir="${build}/${classes}" includes="**/*" manifest="${block.manifest}"/>
+		<jar jarfile="${kabeja.home}/${dist}/${libs}/${block.releasename}.jar"
+			basedir="${build}/${classes}" includes="**/*" manifest="${block.manifest}" />
 	</target>
 
 
@@ -101,14 +106,15 @@
 	<target name="clean">
 		<delete dir="${build}" />
 		<delete dir="${dist}" />
-       <delete file="${block.manifest}"/>
+		<delete file="${block.manifest}" />
 		<delete dir="${tempdir}" />
 	</target>
 
 	<target name="javadoc">
 		<mkdir dir="${build}" />
 		<mkdir dir="${build}/${apidocs}" />
-		<javadoc packagenames="*.*.*" sourcepath="${src}/${sources}" destdir="${build}/${apidocs}">
+		<javadoc packagenames="*.*.*" sourcepath="${src}/${sources}"
+			destdir="${build}/${apidocs}">
 			<classpath>
 				<pathelement path="${classpath}" />
 				<fileset dir="${libs}">
@@ -161,13 +167,16 @@
 			<include name="*.jar" />
 		</fileset>
 		<pathconvert pathsep=" " property="block.jars" refid="jar.files">
-			<map from="${basedir}${file.separator}${block.libs}${file.separator}" to="" />
+			<map from="${basedir}${file.separator}${block.libs}${file.separator}"
+				to="" />
 		</pathconvert>
 		<fileset dir="${kabeja.home}/${dist}/${libs}" id="core-jar.files">
-				<include name="*.jar" />
+			<include name="*.jar" />
 		</fileset>
 		<pathconvert pathsep=" " property="core.jars" refid="core-jar.files">
-				<map from="${kabeja.home}${file.separator}${dist}${file.separator}${libs}${file.separator}" to="" />
+			<map
+				from="${kabeja.home}${file.separator}${dist}${file.separator}${libs}${file.separator}"
+				to="" />
 		</pathconvert>
 		<manifest file="${block.manifest}">
 			<attribute name="Main-Class" value="${block.mainclass}" />

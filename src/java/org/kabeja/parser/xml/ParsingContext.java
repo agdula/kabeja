@@ -1,18 +1,19 @@
-/*
-   Copyright 2009 Simon Mieth
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
 package org.kabeja.parser.xml;
 
 import java.util.ArrayList;
@@ -21,11 +22,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.kabeja.dxf.DXFDocument;
-import org.kabeja.dxf.DXFEntity;
-import org.kabeja.dxf.DXFLayer;
-import org.kabeja.dxf.helpers.DXFUtils;
-import org.kabeja.parser.util.DXFParsingValidator;
+import org.kabeja.DraftDocument;
+import org.kabeja.common.Layer;
+import org.kabeja.entities.Entity;
+import org.kabeja.entities.util.Utils;
+import org.kabeja.parser.util.ParsingValidator;
 
 public class ParsingContext {
 
@@ -33,19 +34,19 @@ public class ParsingContext {
     protected List  validatorList = new ArrayList();
     protected Map properties = new HashMap();
     
-    protected DXFLayer currentLayer;
-    protected DXFDocument doc;
+    protected Layer currentLayer;
+    protected DraftDocument doc;
     
-    public ParsingContext(DXFDocument doc){
+    public ParsingContext(DraftDocument doc){
         this.doc = doc;
     }
        
-    public void addDXFEntityParsingValidator(DXFParsingValidator validator){
+    public void addParsingValidator(ParsingValidator validator){
         this.validatorList.add(validator);
     }
     
     
-    public void removeDXFEntityParsingValidator(DXFParsingValidator validator){
+    public void removeParsingValidator(ParsingValidator validator){
         this.validatorList.remove(validator);
     }
     
@@ -62,17 +63,17 @@ public class ParsingContext {
         return this.properties.containsKey(key);
     }
     
-    public void addDXFEntity(DXFEntity entity){
+    public void addEntity(Entity entity){
        
         Iterator i = this.validatorList.iterator();
         boolean add=true;
         while(i.hasNext()&& add){
-            add = ((DXFParsingValidator)i.next()).isValid(entity);
+            add = ((ParsingValidator)i.next()).isValid(entity);
         }
         if(add){
-            entity.setID(DXFUtils.generateNewID(this.doc));
-            entity.setLayerName(this.currentLayer.getName());
-            this.doc.addDXFEntity(entity);
+            entity.setID(Utils.generateID(this.doc));
+            entity.setLayer(this.currentLayer);
+            this.doc.addEntity(entity);
         }
     }
 
@@ -80,7 +81,7 @@ public class ParsingContext {
     /**
      * @return the currentLayer
      */
-    public DXFLayer getCurrentLayer() {
+    public Layer getCurrentLayer() {
         return currentLayer;
     }
 
@@ -88,17 +89,17 @@ public class ParsingContext {
     /**
      * @param currentLayer the currentLayer to set
      */
-    public void setCurrentLayer(DXFLayer currentLayer) {
+    public void setCurrentLayer(Layer currentLayer) {
         this.currentLayer = currentLayer;
-        if(!this.doc.containsDXFLayer(currentLayer.getName())){
-            this.currentLayer.setID(DXFUtils.generateNewID(this.doc));
-            this.doc.addDXFLayer(currentLayer);
+        if(!this.doc.containsLayer(currentLayer.getName())){
+            this.currentLayer.setID(Utils.generateNewID(this.doc));
+            this.doc.addLayer(currentLayer);
         }
     }
     
     
-    public String generateID(){
-       return DXFUtils.generateNewID(this.doc);
+    public long generateID(){
+       return Utils.generateID(this.doc);
     }
     
 }

@@ -22,7 +22,7 @@
 	<property name="JarClassPath" value="" />
 	<property name="tempdir" value="tmp" />
 	<property name="tools" value="tools" />
-	<property name="block.mainclass" value=""/>
+	<property name="block.mainclass" value="" />
 
 
 
@@ -40,17 +40,18 @@
 		<mkdir dir="${dist}/${lang}" />
 		<mkdir dir="${dist}/${libs}" />
 		<mkdir dir="${dist}/${conf}" />
-		
+
 	</target>
 
 	<target name="compile" depends="init">
-		<javac srcdir="${src}" destdir="${build}/${classes}" target="${java.target.version}" source="${java.target.version}">
+		<javac srcdir="${src}" destdir="${build}/${classes}" target="${java.target.version}"
+			source="${java.target.version}">
 			<classpath>
 				<pathelement path="${classpath}" />
 				<fileset dir="${block.libs}">
 					<include name="**/*.jar" />
 				</fileset>
-				<dirset dir="${kabeja.home}/${build}/${classes}"/>
+				<dirset dir="${kabeja.home}/${build}/${classes}" />
 
 			</classpath>
 		</javac>
@@ -65,7 +66,8 @@
 				<include name="**/*" />
 			</fileset>
 		</copy>
-		<jar jarfile="${kabeja.home}/${dist}/${libs}/${block.releasename}.jar" basedir="${build}/${classes}" includes="**/*" manifest="${block.manifest}"/>
+		<jar jarfile="${kabeja.home}/${dist}/${libs}/${block.releasename}.jar"
+			basedir="${build}/${classes}" includes="**/*" manifest="${block.manifest}" />
 	</target>
 
 
@@ -86,7 +88,8 @@
 	<target name="javadoc">
 		<mkdir dir="${build}" />
 		<mkdir dir="${build}/${apidocs}" />
-		<javadoc packagenames="*.*.*" sourcepath="${src}/${sources}" destdir="${build}/${apidocs}">
+		<javadoc packagenames="*.*.*" sourcepath="${src}/${sources}"
+			destdir="${build}/${apidocs}">
 			<classpath>
 				<pathelement path="${classpath}" />
 				<fileset dir="${libs}">

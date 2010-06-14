@@ -1,18 +1,19 @@
-/*
-   Copyright 2008 Simon Mieth
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
 package org.kabeja.svg.generators;
 
 import java.util.ArrayList;
@@ -20,12 +21,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.kabeja.dxf.DXFEntity;
-import org.kabeja.dxf.DXFPolyline;
-import org.kabeja.dxf.DXFVertex;
-import org.kabeja.dxf.helpers.PolylineSegment;
+import org.kabeja.common.DraftEntity;
+import org.kabeja.entities.Polyline;
+import org.kabeja.entities.Vertex;
+import org.kabeja.entities.util.PolylineSegment;
 import org.kabeja.math.MathUtils;
-import org.kabeja.math.Point;
+import org.kabeja.math.Point3D;
 import org.kabeja.math.TransformContext;
 import org.kabeja.svg.SVGConstants;
 import org.kabeja.svg.SVGPathBoundaryGenerator;
@@ -37,12 +38,12 @@ import org.xml.sax.helpers.AttributesImpl;
 
 public class SVGPolylineGenerator extends AbstractSVGSAXGenerator
     implements SVGPathBoundaryGenerator {
-    public void toSAX(ContentHandler handler, Map svgContext, DXFEntity entity,
+    public void toSAX(ContentHandler handler, Map svgContext, DraftEntity entity,
         TransformContext transformContext) throws SAXException {
         // the polyline will emit as a svg:path
         // note the dxf polyline has more
         // option as the svg:polyline
-        DXFPolyline pline = (DXFPolyline) entity;
+        Polyline pline = (Polyline) entity;
 
         if (pline.getVertexCount() > 0) {
             if (pline.is3DPolygonMesh()) {
@@ -62,7 +63,7 @@ public class SVGPolylineGenerator extends AbstractSVGSAXGenerator
     }
 
     protected void polylineToSAX(ContentHandler handler, Map svgContext,
-        DXFPolyline pline) throws SAXException {
+        Polyline pline) throws SAXException {
         AttributesImpl attr = new AttributesImpl();
 
         if ((pline.getStartWidth() != pline.getEndWidth()) ||
@@ -71,18 +72,18 @@ public class SVGPolylineGenerator extends AbstractSVGSAXGenerator
             polylinePartToSAX(handler, svgContext, pline);
         } else {
             StringBuffer d = new StringBuffer();
-            DXFVertex last;
-            DXFVertex first;
-            Iterator i = pline.getVertexIterator();
-            first = last = (DXFVertex) i.next();
+            Vertex last;
+            Vertex first;
+            Iterator<Vertex> i = pline.getVertices().iterator();
+            first = last = i.next();
             d.append("M ");
-            d.append(SVGUtils.formatNumberAttribute(last.getX()));
+            d.append(SVGUtils.formatNumberAttribute(last.getPoint().getX()));
             d.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
-            d.append(SVGUtils.formatNumberAttribute(last.getY()));
+            d.append(SVGUtils.formatNumberAttribute(last.getPoint().getY()));
             d.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
 
             while (i.hasNext()) {
-                DXFVertex end = (DXFVertex) i.next();
+                Vertex end = (Vertex) i.next();
                 d.append(getVertexPath(last, end, pline));
                 last = end;
             }
@@ -114,24 +115,24 @@ public class SVGPolylineGenerator extends AbstractSVGSAXGenerator
      *
      * @see de.miethxml.kabeja.dxf.helpers.HatchBoundaryElement#getSVGPath()
      */
-    public String getSVGPath(DXFEntity entity) {
+    public String getSVGPath(DraftEntity entity) {
         // create the path
-        DXFPolyline pline = (DXFPolyline) entity;
+        Polyline pline = (Polyline) entity;
         StringBuffer d = new StringBuffer();
 
-        DXFVertex last;
-        DXFVertex first;
+        Vertex last;
+        Vertex first;
 
-        Iterator i = pline.getVertexIterator();
-        first = last = (DXFVertex) i.next();
+        Iterator<Vertex> i = pline.getVertices().iterator();
+        first = last =  i.next();
         d.append("M ");
-        d.append(last.getX());
+        d.append(last.getPoint().getX());
         d.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
-        d.append(last.getY());
+        d.append(last.getPoint().getY());
         d.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
 
         while (i.hasNext()) {
-            DXFVertex end = (DXFVertex) i.next();
+            Vertex end = (Vertex) i.next();
             d.append(getVertexPath(last, end, pline));
             last = end;
         }
@@ -149,19 +150,19 @@ public class SVGPolylineGenerator extends AbstractSVGSAXGenerator
     }
 
     protected void polylinePartToSAX(ContentHandler handler, Map svgContext,
-        DXFPolyline pline) throws SAXException {
+        Polyline pline) throws SAXException {
         // output as group
         AttributesImpl attr = new AttributesImpl();
         super.setCommonAttributes(attr, svgContext, pline);
         SVGUtils.startElement(handler, SVGConstants.SVG_GROUP, attr);
 
-        String oldID = pline.getID();
+       
         PolylineSegment segment = null;
 
         // boolean bulged = false;
         boolean process = true;
-        DXFVertex start = pline.getVertex(0);
-        DXFVertex end = pline.getVertex(1);
+        Vertex start = pline.getVertex(0);
+        Vertex end = pline.getVertex(1);
         segment = new PolylineSegment(start, end, pline);
 
         int i = 1;
@@ -173,7 +174,7 @@ public class SVGPolylineGenerator extends AbstractSVGSAXGenerator
             if ((i + 1) < pline.getVertexCount()) {
                 process = false;
 
-                DXFVertex nextStart = end;
+                Vertex nextStart = end;
                 end = pline.getVertex(i + 1);
                 next = new PolylineSegment(nextStart, end, pline);
 
@@ -305,10 +306,10 @@ public class SVGPolylineGenerator extends AbstractSVGSAXGenerator
 
             // output
             attr = new AttributesImpl();
-            pline.setID(pline.getID() + "__" + i);
+         
             super.setCommonAttributes(attr, svgContext, pline);
 
-            if (pline.getDXFDocument().getDXFHeader().isFillMode()) {
+            if (pline.getDocument().getHeader().isFillMode()) {
                 SVGUtils.addAttribute(attr, "fill", "currentColor");
             }
 
@@ -325,27 +326,27 @@ public class SVGPolylineGenerator extends AbstractSVGSAXGenerator
         }
 
         SVGUtils.endElement(handler, SVGConstants.SVG_GROUP);
-        pline.setID(oldID);
+       
     }
 
     protected void splineFitToSAX(ContentHandler handler, Map svgContext,
-        DXFPolyline pline) throws SAXException {
+        Polyline pline) throws SAXException {
         // TODO we will first use the approximation of the spline
         // and later take e deeper look at SVG-bezier curves /DXF b-splines
         StringBuffer d = new StringBuffer();
 
-        Iterator i = pline.getVertexIterator();
-        DXFVertex last = (DXFVertex) i.next();
-        d.append("M " + last.getX() + " " + last.getY() + " ");
+        Iterator<Vertex> i = pline.getVertices().iterator();
+        Vertex last = i.next();
+        d.append("M " + last.getPoint().getX() + " " + last.getPoint().getY() + " ");
 
         while (i.hasNext()) {
-            DXFVertex vertex = (DXFVertex) i.next();
+            Vertex vertex = (Vertex) i.next();
 
             if (vertex.is2DSplineApproximationVertex()) {
                 d.append("L ");
-                d.append(vertex.getX());
+                d.append(vertex.getPoint().getX());
                 d.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
-                d.append(vertex.getY());
+                d.append(vertex.getPoint().getY());
                 d.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
             }
         }
@@ -359,17 +360,17 @@ public class SVGPolylineGenerator extends AbstractSVGSAXGenerator
         SVGUtils.emptyElement(handler, SVGConstants.SVG_PATH, attr);
     }
 
-    protected void singleEdgeToSAX(ContentHandler handler, DXFVertex start,
-        DXFVertex end, Map svgContext, DXFPolyline pline)
+    protected void singleEdgeToSAX(ContentHandler handler, Vertex start,
+        Vertex end, Map svgContext, Polyline pline)
         throws SAXException {
         AttributesImpl attr = new AttributesImpl();
         super.setCommonAttributes(attr, svgContext, pline);
 
         StringBuffer d = new StringBuffer();
         d.append("M ");
-        d.append(start.getX());
+        d.append(start.getPoint().getX());
         d.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
-        d.append(start.getY());
+        d.append(start.getPoint().getY());
         d.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
 
         d.append(getVertexPath(start, end, pline));
@@ -386,19 +387,19 @@ public class SVGPolylineGenerator extends AbstractSVGSAXGenerator
     }
 
     protected void polyfaceToSAX(ContentHandler handler, Map svgContext,
-        DXFPolyline pline) throws SAXException {
-        Iterator i = pline.getVertexIterator();
+        Polyline pline) throws SAXException {
+      
         StringBuffer buf = new StringBuffer();
 
-        while (i.hasNext()) {
-            DXFVertex v = (DXFVertex) i.next();
-
+      for(Vertex v:pline.getVertices()){
             if (v.isFaceRecord()) {
-                DXFVertex v1 = pline.getPolyFaceMeshVertex(v.getPolyFaceMeshVertex0());
-                DXFVertex v2 = pline.getPolyFaceMeshVertex(v.getPolyFaceMeshVertex1());
-                DXFVertex v3 = pline.getPolyFaceMeshVertex(v.getPolyFaceMeshVertex2());
-                DXFVertex v4 = pline.getPolyFaceMeshVertex(v.getPolyFaceMeshVertex3());
+                Vertex v1 = pline.getPolyFaceMeshVertex(v.getPolyFaceMeshVertex0());            
+                Vertex v2 = pline.getPolyFaceMeshVertex(v.getPolyFaceMeshVertex1());
+                Vertex v3 = pline.getPolyFaceMeshVertex(v.getPolyFaceMeshVertex2());
+                Vertex v4 = pline.getPolyFaceMeshVertex(v.getPolyFaceMeshVertex3());
 
+             
+                
                 if (v.isPolyFaceEdge0Visible() &&
                         (v.getPolyFaceMeshVertex0() != 0)) {
                     addEdgeToPath(v1, v2, buf);
@@ -433,35 +434,35 @@ public class SVGPolylineGenerator extends AbstractSVGSAXGenerator
             }
         }
 
-        if (buf.length() > 0) {
-            AttributesImpl attr = new AttributesImpl();
-            SVGUtils.addAttribute(attr, "d", buf.toString());
-            super.setCommonAttributes(attr, svgContext, pline);
-            SVGUtils.emptyElement(handler, SVGConstants.SVG_PATH, attr);
-        }
+//        if (buf.length() > 0) {
+//            AttributesImpl attr = new AttributesImpl();
+//            SVGUtils.addAttribute(attr, "d", buf.toString());
+//            super.setCommonAttributes(attr, svgContext, pline);
+//            SVGUtils.emptyElement(handler, SVGConstants.SVG_PATH, attr);
+//        }
     }
 
-    protected void addEdgeToPath(DXFVertex start, DXFVertex end,
+    protected void addEdgeToPath(Vertex start, Vertex end,
         StringBuffer buf) {
         buf.append('M');
         buf.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
-        buf.append(start.getX());
+        buf.append(start.getPoint().getX());
         buf.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
-        buf.append(start.getY());
+        buf.append(start.getPoint().getY());
         buf.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
 
         if (end != null) {
             buf.append('L');
             buf.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
-            buf.append(end.getX());
+            buf.append(end.getPoint().getX());
             buf.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
-            buf.append(end.getY());
+            buf.append(end.getPoint().getY());
             buf.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
         }
     }
 
     protected void meshToSAX(ContentHandler handler, Map svgContext,
-        DXFPolyline pline) throws SAXException {
+        Polyline pline) throws SAXException {
         // TODO check first the points and put the output together
         StringBuffer d = new StringBuffer();
 
@@ -469,19 +470,19 @@ public class SVGPolylineGenerator extends AbstractSVGSAXGenerator
             int rows = pline.getRows();
             d = new StringBuffer();
 
-            Point[][] points = new Point[pline.getRows()][pline.getColumns()];
-            Iterator it = pline.getVertexIterator();
+            Point3D[][] points = new Point3D[pline.getRows()][pline.getColumns()];
+            Iterator<Vertex> it = pline.getVertices().iterator();
 
             // create a line for each row
             for (int i = 0; i < pline.getRows(); i++) {
                 d.append("M ");
 
                 for (int x = 0; x < pline.getColumns(); x++) {
-                    DXFVertex v = (DXFVertex) it.next();
+                    Vertex v = (Vertex) it.next();
                     points[i][x] = v.getPoint();
-                    d.append(v.getX());
+                    d.append(v.getPoint().getX());
                     d.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
-                    d.append(v.getY());
+                    d.append(v.getPoint().getY());
 
                     if (x < (pline.getColumns() - 1)) {
                         d.append(" L ");
@@ -522,30 +523,28 @@ public class SVGPolylineGenerator extends AbstractSVGSAXGenerator
                 }
             }
         } else {
-            Point[][] points = new Point[pline.getSurefaceDensityRows()][pline.getSurefaceDensityColumns()];
-            Iterator vi = pline.getVertexIterator();
-            List appVertices = new ArrayList();
-
-            while (vi.hasNext()) {
-                DXFVertex v = (DXFVertex) vi.next();
+            Point3D[][] points = new Point3D[pline.getSurefaceDensityRows()][pline.getSurefaceDensityColumns()];
+          
+            List<Vertex> appVertices = new ArrayList<Vertex>();
+          for(Vertex v:pline.getVertices()){
 
                 if (v.isMeshApproximationVertex()) {
                     appVertices.add(v);
                 }
             }
 
-            Iterator it = appVertices.iterator();
+            Iterator<Vertex> it = appVertices.iterator();
 
             // create a line for each row
             for (int i = 0; i < pline.getSurefaceDensityRows(); i++) {
                 d.append("M ");
 
                 for (int x = 0; x < pline.getSurefaceDensityColumns(); x++) {
-                    DXFVertex v = (DXFVertex) it.next();
+                    Vertex v = (Vertex) it.next();
                     points[i][x] = v.getPoint();
-                    d.append(v.getX());
+                    d.append(v.getPoint().getX());
                     d.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
-                    d.append(v.getY());
+                    d.append(v.getPoint().getY());
 
                     if (x < (pline.getSurefaceDensityColumns() - 1)) {
                         d.append(" L ");
@@ -593,8 +592,8 @@ public class SVGPolylineGenerator extends AbstractSVGSAXGenerator
         SVGUtils.emptyElement(handler, SVGConstants.SVG_PATH, attr);
     }
 
-    protected String getVertexPath(DXFVertex start, DXFVertex end,
-        DXFPolyline pline) {
+    protected String getVertexPath(Vertex start, Vertex end,
+        Polyline pline) {
         StringBuffer d = new StringBuffer();
 
         if (start.getBulge() != 0) {
@@ -629,16 +628,16 @@ public class SVGPolylineGenerator extends AbstractSVGSAXGenerator
                     d.append(" 1 ");
                 }
 
-                d.append(end.getX());
+                d.append(end.getPoint().getX());
                 d.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
-                d.append(end.getY());
+                d.append(end.getPoint().getY());
                 d.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
             }
         } else {
             d.append("L ");
-            d.append(SVGUtils.formatNumberAttribute(end.getX()));
+            d.append(SVGUtils.formatNumberAttribute(end.getPoint().getX()));
             d.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
-            d.append(SVGUtils.formatNumberAttribute(end.getY()));
+            d.append(SVGUtils.formatNumberAttribute(end.getPoint().getY()));
             d.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
         }
 

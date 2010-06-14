@@ -1,26 +1,27 @@
-/*
-   Copyright 2008 Simon Mieth
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
- */
 package org.kabeja.svg.generators;
 
 import java.util.Map;
 
-import org.kabeja.dxf.DXFColor;
-import org.kabeja.dxf.DXFDocument;
-import org.kabeja.dxf.DXFEntity;
-import org.kabeja.dxf.DXFLineType;
+import org.kabeja.DraftDocument;
+import org.kabeja.common.Color;
+import org.kabeja.common.DraftEntity;
+import org.kabeja.common.LineType;
 import org.kabeja.svg.SVGConstants;
 import org.kabeja.svg.SVGContext;
 import org.kabeja.svg.SVGSAXGenerator;
@@ -31,7 +32,7 @@ public abstract class AbstractSVGSAXGenerator implements SVGSAXGenerator {
 
 	
 	public void setCommonAttributes(AttributesImpl atts, Map context,
-			DXFEntity entity) {
+			DraftEntity entity) {
 		
 		setVisibilityAttribute(atts, entity);
 		setXMLIDAttribute(atts, entity);
@@ -43,7 +44,7 @@ public abstract class AbstractSVGSAXGenerator implements SVGSAXGenerator {
 	
 	
 	public void setCommonTextAttributes(AttributesImpl atts, Map context,
-			DXFEntity entity){
+			DraftEntity entity){
 		setVisibilityAttribute(atts, entity);
 		setXMLIDAttribute(atts, entity);
 		setColorAttribute(atts, entity);
@@ -53,7 +54,7 @@ public abstract class AbstractSVGSAXGenerator implements SVGSAXGenerator {
 	}
 	
 	
-	protected void setVisibilityAttribute(AttributesImpl atts,	DXFEntity entity){
+	protected void setVisibilityAttribute(AttributesImpl atts,	DraftEntity entity){
 		// a negative color indicates the layer is off
 		if (!entity.isVisibile()) {
 			// we calculate the bounds self so they must not
@@ -67,7 +68,7 @@ public abstract class AbstractSVGSAXGenerator implements SVGSAXGenerator {
 	}
 	
 	
-	protected void setColorAttribute(AttributesImpl atts,	DXFEntity entity){
+	protected void setColorAttribute(AttributesImpl atts,	DraftEntity entity){
 		// color 256 indicates color by layer
 		int color = entity.getColor();
 
@@ -76,11 +77,11 @@ public abstract class AbstractSVGSAXGenerator implements SVGSAXGenerator {
 		    byte[] b = entity.getColorRGB();
 		    if(b.length==3){
 		        SVGUtils.addAttribute(atts, SVGConstants.SVG_ATTRIBUTE_COLOR,
-	                    "rgb(" + DXFColor.getRGBString(b) + ")");
+	                    "rgb(" + Color.getRGBString(b) + ")");
 		    }else{
 		    
 			SVGUtils.addAttribute(atts, SVGConstants.SVG_ATTRIBUTE_COLOR,
-					"rgb(" + DXFColor.getRGBString(color) + ")");
+					"rgb(" + Color.getRGBString(color) + ")");
 		    }
 			
 		}
@@ -89,17 +90,17 @@ public abstract class AbstractSVGSAXGenerator implements SVGSAXGenerator {
 	}
 	
 	
-	protected void setXMLIDAttribute(AttributesImpl atts,	DXFEntity entity){
-		if (entity.getID().length() > 0) {
+	protected void setXMLIDAttribute(AttributesImpl atts,	DraftEntity entity){
+	
 			SVGUtils.addAttribute(atts, SVGConstants.XML_ID, SVGUtils
-					.validateID(entity.getID()));
-		}
+					.toValidateID(entity.getID()));
+		
 	}
 	
 	
 	
 	protected void setStrokeAttribute(AttributesImpl atts, Map context,
-			DXFEntity entity){
+			DraftEntity entity){
 		
 		
 		
@@ -113,27 +114,21 @@ public abstract class AbstractSVGSAXGenerator implements SVGSAXGenerator {
 							.lineWeightToStrokeWidth(entity.getLineWeight()));
 		} 
 
-		DXFDocument doc = entity.getDXFDocument();
-	
+		DraftDocument doc = entity.getDocument();
 
+		double gscale = doc.getHeader().getLinetypeScale();
 
-		double gscale = doc.getDXFHeader().getLinetypeScale();
+		
 
-		String lineType = entity.getLineType();
-
-		if ((lineType.length() > 0) && !"CONTINUOUS".equals(lineType)
-				&& !"BYBLOCK".equals(lineType) && !"BYLAYER".equals(lineType)
-				&& !entity.isOmitLineType()) {
-			DXFLineType ltype = doc.getDXFLineType(lineType);
-
+		if (entity.hasLineType() && !entity.isOmitLineType()) {
+		
 			gscale = gscale * entity.getLinetypeScaleFactor();
-			SVGUtils.addStrokeDashArrayAttribute(atts, ltype, gscale);
+			SVGUtils.addStrokeDashArrayAttribute(atts,entity.getLineType(), gscale);
 			
 			
 		} else if (!entity.isOmitLineType()) {
 			// get the line type from layer
-			DXFLineType ltype = doc.getDXFLineType(doc.getDXFLayer(
-					entity.getLayerName()).getLineType());
+			LineType ltype =  entity.getLayer().getLineType();
 
 			if (ltype != null) {
 				gscale = gscale * entity.getLinetypeScaleFactor();

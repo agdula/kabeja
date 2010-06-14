@@ -41,7 +41,8 @@
 	</target>
 
 	<target name="compile" depends="init">
-		<javac srcdir="${src}/${sources}" destdir="${build}/${classes}" target="${java.target.version}" source="${java.target.version}">
+		<javac srcdir="${src}/${sources}" destdir="${build}/${classes}"
+			target="${java.target.version}" source="${java.target.version}">
 			<classpath>
 				<pathelement path="${classpath}" />
 				<fileset dir="${libs}">
@@ -62,7 +63,8 @@
 
 
 	<target name="dist" depends="compile,manifest">
-		<jar jarfile="${kabeja.home}/${dist}/${libs}/${block.releasename}.jar" basedir="${build}/${classes}" includes="**/*" manifest="${manifest}" />
+		<jar jarfile="${kabeja.home}/${dist}/${libs}/${block.releasename}.jar"
+			basedir="${build}/${classes}" includes="**/*" manifest="${manifest}" />
 		<delete file="${manifest}" />
 	</target>
 
@@ -85,7 +87,8 @@
 	<target name="javadoc">
 		<mkdir dir="${build}" />
 		<mkdir dir="${build}/${apidocs}" />
-		<javadoc packagenames="*.*.*" sourcepath="${src}/${sources}" destdir="${kabeja.home}/${build}/${apidocs}">
+		<javadoc packagenames="*.*.*" sourcepath="${src}/${sources}"
+			destdir="${kabeja.home}/${build}/${apidocs}">
 			<classpath>
 				<pathelement path="${classpath}" />
 				<fileset dir="${libs}">

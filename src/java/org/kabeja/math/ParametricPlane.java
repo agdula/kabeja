@@ -1,25 +1,25 @@
-/*
-   Copyright 2008 Simon Mieth
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
 package org.kabeja.math;
 
-import org.kabeja.dxf.DXFExtrusion;
 
 
 public class ParametricPlane {
-    protected Point base;
+    protected Point3D base;
     protected Vector directionX;
     protected Vector directionY;
     protected Vector normal;
@@ -35,7 +35,7 @@ public class ParametricPlane {
      * @param normal
      *            the normal direction of this plane
      */
-    public ParametricPlane(Point basePoint, Vector directionX,
+    public ParametricPlane(Point3D basePoint, Vector directionX,
         Vector directionY, Vector normal) {
         this.base = basePoint;
         this.directionX = directionX;
@@ -52,7 +52,7 @@ public class ParametricPlane {
      * @param directionY
      *            the y direction of this plane
      */
-    public ParametricPlane(Point basePoint, Vector directionX, Vector directionY) {
+    public ParametricPlane(Point3D basePoint, Vector directionX, Vector directionY) {
         this(basePoint, directionX, directionY,
             MathUtils.normalize(MathUtils.crossProduct(directionX, directionY)));
     }
@@ -66,20 +66,20 @@ public class ParametricPlane {
      * @param b
      * @param normal
      */
-    public ParametricPlane(Point basePoint, Point b, Vector normal) {
+    public ParametricPlane(Point3D basePoint, Point3D b, Vector normal) {
         this(basePoint, MathUtils.normalize(MathUtils.getVector(basePoint, b)),
             MathUtils.normalize(MathUtils.crossProduct(normal,
                     MathUtils.normalize(MathUtils.getVector(basePoint, b)))),
             normal);
     }
 
-    public ParametricPlane(Point basePoint, Point b, Point c) {
+    public ParametricPlane(Point3D basePoint, Point3D b, Point3D c) {
         this(basePoint, MathUtils.normalize(MathUtils.getVector(basePoint, b)),
             MathUtils.normalize(MathUtils.getVector(basePoint, c)));
     }
 
-    public ParametricPlane(DXFExtrusion e) {
-        this(new Point(0.0, 0.0, 0.0), e.getDirectionX(), e.getDirectionY(),
+    public ParametricPlane(Extrusion e) {
+        this(new Point3D(0.0, 0.0, 0.0), e.getDirectionX(), e.getDirectionY(),
             e.getNormal());
     }
 
@@ -90,8 +90,8 @@ public class ParametricPlane {
      * @param y
      * @return
      */
-    public Point getPoint(double x, double y) {
-        Point p = new Point();
+    public Point3D getPoint(double x, double y) {
+        Point3D p = new Point3D();
         p.setX(this.base.getX() + (this.directionX.getX() * x) +
             (this.directionY.getX() * y));
         p.setY(this.base.getY() + (this.directionX.getY() * x) +
@@ -102,7 +102,7 @@ public class ParametricPlane {
         return p;
     }
 
-    public Point getPoint(Point point) {
+    public Point3D getPoint(Point3D point) {
         return getPoint(point.getX(), point.getY());
     }
 
@@ -113,7 +113,7 @@ public class ParametricPlane {
      * @param p
      * @return double[]{parameter x direction, parameter y direction}
      */
-    public double[] getParameter(Point p) {
+    public double[] getParameter(Point3D p) {
         double u = 0.0;
         double v = (this.directionX.getY() * this.directionY.getX()) -
             (this.directionX.getX() * this.directionY.getY());
@@ -143,7 +143,7 @@ public class ParametricPlane {
      *            the point to determine
      * @return true if the point lies on the plane, otherwise false.
      */
-    public boolean isOnPlane(Point p) {
+    public boolean isOnPlane(Point3D p) {
         double[] para = this.getParameter(p);
         double v = this.base.getZ() + (this.directionX.getZ() * para[0]) +
             (this.directionY.getZ() * para[1]);
@@ -169,11 +169,11 @@ public class ParametricPlane {
         return true;
     }
 
-    public Point getBasePoint() {
+    public Point3D getBasePoint() {
         return base;
     }
 
-    public void setBasePoint(Point base) {
+    public void setBasePoint(Point3D base) {
         this.base = base;
     }
 

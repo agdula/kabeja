@@ -1,18 +1,19 @@
-/*
-   Copyright 2005 Simon Mieth
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
 package org.kabeja.math;
 
 
@@ -97,10 +98,10 @@ public class MathUtils {
      *            the parameter
      * @return a new point
      */
-    public static Point getPointOfStraightLine(Point a, Vector direction,
+    public static Point3D getPointOfStraightLine(Point3D a, Vector direction,
         double parameter) {
         // p = a + v*scale
-        Point p = new Point();
+        Point3D p = new Point3D();
         Vector v = scaleVector(direction, parameter);
 
         p.setX(a.getX() + v.getX());
@@ -117,7 +118,7 @@ public class MathUtils {
      * @param b
      * @return the vector from a to b
      */
-    public static Vector getVector(Point a, Point b) {
+    public static Vector getVector(Point3D a, Point3D b) {
         Vector v = new Vector();
 
         v.setX(b.getX() - a.getX());
@@ -127,7 +128,7 @@ public class MathUtils {
         return v;
     }
 
-    public static Point getIntersection(Point a, Vector u, Point b, Vector v) {
+    public static Point3D getIntersection(Point3D a, Vector u, Point3D b, Vector v) {
         //u = normalize(u);
         //v = normalize(v);
         Vector n = crossProduct(u, v);
@@ -142,12 +143,12 @@ public class MathUtils {
             s = m.getX() / n.getX();
         }
 
-        Point p = getPointOfStraightLine(a, u, s);
+        Point3D p = getPointOfStraightLine(a, u, s);
 
         return p;
     }
 
-    public static double distance(Point start, Point end) {
+    public static double distance(Point3D start, Point3D end) {
         double length = Math.sqrt(Math.pow((end.getX() - start.getX()), 2) +
                 Math.pow((end.getY() - start.getY()), 2) +
                 Math.pow((end.getZ() - start.getZ()), 2));
@@ -180,8 +181,8 @@ public class MathUtils {
      *            in radian
      * @return the rotated point
      */
-    public static Point rotatePointXY(Point p, Point center, double angle) {
-        Point r = new Point();
+    public static Point3D rotatePointXY(Point3D p, Point3D center, double angle) {
+        Point3D r = new Point3D();
         r.setX((center.getX() + (Math.cos(angle) * (p.getX() - center.getX()))) -
             ((p.getY() - center.getY()) * Math.sin(angle)));
         r.setY((center.getY() + (Math.cos(angle) * (p.getY() - center.getY()))) -
@@ -204,7 +205,7 @@ public class MathUtils {
      * @param center
      * @return
      */
-    public static int getQuadrant(Point p, Point center) {
+    public static int getQuadrant(Point3D p, Point3D center) {
         if (p.getX() < center.getX()) {
             if (p.getY() >= center.getY()) {
                 return 1;

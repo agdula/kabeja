@@ -1,3 +1,18 @@
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 /*
 "THE SODA-WARE LICENSE" (Revision 1):
 
@@ -30,11 +45,11 @@ import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 
 import org.apache.batik.dom.svg.SVGDOMImplementation;
-import org.kabeja.dxf.DXFDocument;
-import org.kabeja.dxf.DXFEntity;
-import org.kabeja.dxf.DXFLayer;
+import org.kabeja.DraftDocument;
+import org.kabeja.common.DraftEntity;
+import org.kabeja.common.Layer;
 import org.kabeja.svg.SVGUtils;
-import org.kabeja.svg.action.DXFDocumentAction;
+import org.kabeja.svg.action.DraftDocumentAction;
 import org.kabeja.svg.action.SVGDocumentAction;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -48,7 +63,7 @@ import de.miethxml.toolkit.ui.UIUtils;
 
 
 public class HighlightAction extends AbstractAction implements SVGDocumentAction,
-    EventListener, ItemListener, DXFDocumentAction {
+    EventListener, ItemListener, DraftDocumentAction {
     public final static String HIGHLIGHT_STYLE = "stroke:red;fill:blue;fill-opacity:0.25;stroke-width:0.15%";
     public final static String DEFAULT_STYLE = "stroke:black;stroke-width:0.15%";
     private Element elem;
@@ -56,7 +71,7 @@ public class HighlightAction extends AbstractAction implements SVGDocumentAction
     private Element labelID;
     private Node text;
     private String oldStyle;
-    private DXFDocument dxfDocument;
+    private DraftDocument dxfDocument;
     protected double STROKE_WIDTH_PRECENTS = 0.002;
     protected double strokeWidth = 0.5;
     protected double fontSize = 12;
@@ -197,9 +212,9 @@ public class HighlightAction extends AbstractAction implements SVGDocumentAction
         //			float width = (float) (screen.getA() * w + screen.getC() * 0
         //					+ screen.getE());
         //			 
-        String handle = SVGUtils.reverseID(el.getAttribute("id"));
-        DXFEntity entity = this.dxfDocument.getDXFEntityByID(handle);
-        DXFLayer layer = this.dxfDocument.getDXFLayer(entity.getLayerName());
+        long handle = SVGUtils.reverseID(el.getAttribute("id"));
+        DraftEntity entity = this.dxfDocument.getEntityByID(handle);
+        Layer layer =  entity.getLayer();
         System.out.println("Selected Entity=" + handle);
 
         if (entity != null) {
@@ -213,7 +228,7 @@ public class HighlightAction extends AbstractAction implements SVGDocumentAction
         //			this.labelID.setTextContent("Handle="+handle);
     }
 
-    public void setDXFDocument(DXFDocument doc) {
+    public void setDXFDocument(DraftDocument doc) {
         this.dxfDocument = doc;
     }
 }

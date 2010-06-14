@@ -1,31 +1,30 @@
-/*
-   Copyright 2005 Simon Mieth
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
 package org.kabeja.processing;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
-import org.kabeja.dxf.DXFDocument;
+import org.kabeja.DraftDocument;
 import org.kabeja.parser.ParseException;
 import org.kabeja.parser.Parser;
 import org.kabeja.processing.event.ProcessingListener;
@@ -39,12 +38,16 @@ import org.kabeja.xml.SAXSerializer;
  *
  */
 public class ProcessingManager {
+	
     private Map saxfilters = new HashMap();
     private Map saxserializers = new HashMap();
     private Map postprocessors = new HashMap();
     private Map pipelines = new HashMap();
     private Map saxgenerators = new HashMap();
-    private List parsers = new ArrayList();
+    private Map parsers = new HashMap();
+    private Map generators = new HashMap();
+  
+    
 
     public void addSAXFilter(SAXFilter filter, String name) {
         this.saxfilters.put(name, filter);
@@ -74,16 +77,16 @@ public class ProcessingManager {
         this.postprocessors.put(name, pp);
     }
 
-    public void addParser(Parser parser) {
-        this.parsers.add(parser);
+    public void addParser(Parser parser,String name) {
+        this.parsers.put(name,parser);
     }
 
-    public List getParsers() {
+    public Map getParsers() {
         return this.parsers;
     }
 
-    protected Parser getParser(String extension) {
-        Iterator i = this.parsers.iterator();
+    public Parser getParser(String extension) {
+        Iterator i = this.parsers.values().iterator();
 
         while (i.hasNext()) {
             Parser parser = (Parser) i.next();
@@ -123,9 +126,7 @@ public class ProcessingManager {
 
         if (parser != null) {
             try {
-                parser.parse(stream, null);
-
-                DXFDocument doc = parser.getDocument();
+                DraftDocument doc = parser.parse(stream, new HashMap());
                 this.process(doc, context, pipeline, out);
             } catch (ParseException e) {
                 throw new ProcessorException(e);
@@ -133,7 +134,7 @@ public class ProcessingManager {
         }
     }
 
-    public void process(DXFDocument doc, Map context, String pipeline,
+    public void process(DraftDocument doc, Map context, String pipeline,
         OutputStream out) throws ProcessorException {
         if (this.pipelines.containsKey(pipeline)) {
             ProcessPipeline pp = (ProcessPipeline) this.pipelines.get(pipeline);
@@ -145,12 +146,12 @@ public class ProcessingManager {
         }
     }
 
-    public void process(DXFDocument doc, Map context, String pipeline,
+    public void process(DraftDocument doc, Map context, String pipeline,
         String sourceFile) throws ProcessorException {
         if (this.pipelines.containsKey(pipeline)) {
             try {
                 ProcessPipeline pp = (ProcessPipeline) this.pipelines.get(pipeline);
-                String suffix = pp.getSAXSerializer().getSuffix();
+                String suffix = pp.getGenerator().getSuffix();
                 String file = sourceFile.substring(0,
                         sourceFile.lastIndexOf('.') + 1) + suffix;
                 FileOutputStream out = new FileOutputStream(file);
@@ -172,10 +173,19 @@ public class ProcessingManager {
         return (SAXGenerator) this.saxgenerators.get(name);
     }
 
-    public Map getSAXGenerators() {
-        return this.saxgenerators;
+    public Map getGenerators() {
+        return this.generators;
+    }
+    
+    public Generator getGenerator(String name){
+    	return (Generator)this.generators.get(name);
     }
 
+    public void addGenerator(Generator generator,String name){
+    	this.generators.put(name,generator);
+    }
+    
+    
     public void addProcessingListener(ProcessingListener l) {
     }
 

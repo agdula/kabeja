@@ -1,30 +1,29 @@
-/*
-   Copyright 2008 Simon Mieth
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
- */
 package org.kabeja.svg.generators;
 
-import java.util.Iterator;
 import java.util.Map;
 
-import org.kabeja.dxf.DXFAttrib;
-import org.kabeja.dxf.DXFBlock;
-import org.kabeja.dxf.DXFConstants;
-import org.kabeja.dxf.DXFEntity;
-import org.kabeja.dxf.DXFInsert;
-import org.kabeja.dxf.helpers.LineWidth;
-import org.kabeja.math.Point;
+import org.kabeja.common.Block;
+import org.kabeja.common.DraftEntity;
+import org.kabeja.common.LineWidth;
+import org.kabeja.entities.Attrib;
+import org.kabeja.entities.Insert;
+import org.kabeja.math.Point3D;
 import org.kabeja.math.TransformContext;
 import org.kabeja.svg.SVGConstants;
 import org.kabeja.svg.SVGContext;
@@ -37,21 +36,20 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 public class SVGInsertGenerator extends AbstractSVGSAXGenerator {
-	public void toSAX(ContentHandler handler, Map svgContext, DXFEntity entity,
+	public void toSAX(ContentHandler handler, Map svgContext, DraftEntity entity,
 			TransformContext transformContext) throws SAXException {
-		DXFInsert insert = (DXFInsert) entity;
+		Insert insert = (Insert) entity;
 
-		DXFBlock block = insert.getDXFDocument().getDXFBlock(
-				insert.getBlockID());
+		Block block = insert.getBlock();
 
 		StringBuffer buf = new StringBuffer();
 
-		Point referencePoint = block.getReferencePoint();
+		Point3D referencePoint = block.getReferencePoint();
 
 		int rows = insert.getRows();
 		int columns = insert.getColumns();
 		double rotate = insert.getRotate();
-		Point insertPoint = insert.getPoint();
+		Point3D insertPoint = insert.getInsertPoint();
 		double scale_x = insert.getScaleX();
 		double scale_y = insert.getScaleY();
 		double column_spacing = insert.getColumnSpacing();
@@ -110,19 +108,15 @@ public class SVGInsertGenerator extends AbstractSVGSAXGenerator {
 
 				// fix the scale of stroke-width
 				double s = Math.abs(scale_x) + Math.abs(scale_y);
-				if ((s > 0.00000001 || s <0.0000001)
+				if ((s != 0.0)
 						&& svgContext
 								.containsKey(SVGContext.LAYER_STROKE_WIDTH)) {
 					LineWidth lw = (LineWidth) svgContext
 							.get(SVGContext.LAYER_STROKE_WIDTH);
 				
 					lw.setValue((lw.getValue() * 2) / s);
-						SVGUtils.addAttribute(attr,
-								SVGConstants.SVG_ATTRIBUTE_STROKE_WITDH, SVGUtils.lineWidthToStrokeWidth(lw));
-					
-				
-					
-					
+					SVGUtils.addAttribute(attr,
+							SVGConstants.SVG_ATTRIBUTE_STROKE_WITDH, SVGUtils.lineWidthToStrokeWidth(lw));
 				}
 
 				// SVGUtils.startElement(handler, SVGConstants.SVG_GROUP, attr);
@@ -134,7 +128,7 @@ public class SVGInsertGenerator extends AbstractSVGSAXGenerator {
 			
 				attr.addAttribute(SVGConstants.XLINK_NAMESPACE, "href",
 						"xlink:href", "CDATA", "#"
-								+ SVGUtils.validateID(block.getID()));
+								+ SVGUtils.toValidateID(block.getID()));
 
 				SVGUtils.emptyElement(handler, SVGConstants.SVG_USE, attr);
 
@@ -143,14 +137,13 @@ public class SVGInsertGenerator extends AbstractSVGSAXGenerator {
 			}
 		}
 		// handle block attriubtes
-		Iterator i = insert.getAttributeIterator();
+		
 		SVGSAXGeneratorManager manager = (SVGSAXGeneratorManager) svgContext
 				.get(SVGContext.SVGSAXGENERATOR_MANAGER);
 		try {
 
-			while (i.hasNext()) {
-				DXFAttrib attrib = (DXFAttrib) i.next();
-				SVGSAXGenerator gen = manager.getSVGGenerator(attrib.getType());
+			for(Attrib attrib :insert.getAttributes()){
+				SVGSAXGenerator gen = manager.getSVGGenerator(attrib.getType().getHandle());
 				gen.toSAX(handler, svgContext, attrib, transformContext);
 
 			}

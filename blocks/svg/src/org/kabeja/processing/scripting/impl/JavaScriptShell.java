@@ -1,18 +1,19 @@
-/*
-   Copyright 2008 Simon Mieth
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
 package org.kabeja.processing.scripting.impl;
 
 import java.awt.BorderLayout;
@@ -54,13 +55,13 @@ import javax.swing.JTextArea;
 import javax.swing.JToolBar;
 import javax.swing.text.BadLocationException;
 
-import org.kabeja.dxf.DXFDocument;
+import org.kabeja.DraftDocument;
 import org.kabeja.processing.AbstractPostProcessor;
 import org.kabeja.processing.ProcessorException;
-import org.kabeja.ui.DXFDocumentViewComponent;
+import org.kabeja.ui.DraftDocumentViewComponent;
 import org.kabeja.ui.UIException;
-import org.kabeja.ui.event.DXFDocumentChangeEventProvider;
-import org.kabeja.ui.event.DXFDocumentChangeListener;
+import org.kabeja.ui.event.DraftDocumentChangeEventProvider;
+import org.kabeja.ui.event.DraftDocumentChangeListener;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ErrorReporter;
@@ -72,7 +73,7 @@ import de.miethxml.toolkit.ui.UIUtils;
 
 
 public class JavaScriptShell extends AbstractPostProcessor
-    implements DXFDocumentViewComponent, DXFDocumentChangeEventProvider {
+    implements DraftDocumentViewComponent, DraftDocumentChangeEventProvider {
     protected final static String COMMAND_PREFIX = "js>";
     protected JFrame frame;
     protected JTextArea textArea;
@@ -82,9 +83,9 @@ public class JavaScriptShell extends AbstractPostProcessor
     protected ScriptWorker worker;
     protected String title = "JSShell";
     protected ArrayList listeners = new ArrayList();
-    protected DXFDocument doc;
+    protected DraftDocument doc;
 
-    public void process(DXFDocument doc, Map context) throws ProcessorException {
+    public void process(DraftDocument doc, Map context) throws ProcessorException {
         worker = new ScriptWorker(doc);
         worker.start();
         this.init();
@@ -342,7 +343,7 @@ public class JavaScriptShell extends AbstractPostProcessor
         worker.dispose();
     }
 
-    public void showDXFDocument(DXFDocument doc) throws UIException {
+    public void showDraftDocument(DraftDocument doc) throws UIException {
     	
         this.doc = doc;
         worker = new ScriptWorker(doc);
@@ -375,12 +376,12 @@ public class JavaScriptShell extends AbstractPostProcessor
         return panel;
     }
 
-    public void addDXFDocumentChangeListener(DXFDocumentChangeListener listener) {
+    public void addDraftDocumentChangeListener(DraftDocumentChangeListener listener) {
         this.listeners.add(listener);
     }
 
-    public void removeDXFDocumentChangeListener(
-        DXFDocumentChangeListener listener) {
+    public void removeDraftDocumentChangeListener(
+        DraftDocumentChangeListener listener) {
         this.listeners.remove(listener);
     }
 
@@ -389,7 +390,7 @@ public class JavaScriptShell extends AbstractPostProcessor
             Iterator i = ((ArrayList) this.listeners.clone()).iterator();
 
             while (i.hasNext()) {
-                DXFDocumentChangeListener l = (DXFDocumentChangeListener) i.next();
+                DraftDocumentChangeListener l = (DraftDocumentChangeListener) i.next();
                 l.changed(this.doc);
             }
         }
@@ -453,12 +454,12 @@ public class JavaScriptShell extends AbstractPostProcessor
         protected boolean execute = false;
         protected boolean dispose = false;
         protected String script;
-        protected DXFDocument doc;
+        protected DraftDocument doc;
         PrintStream err;
         PrintStream out;
         protected PrintStream output = new PrintStream(new JTextAreaPrintWriter());
 
-        public ScriptWorker(DXFDocument doc) {
+        public ScriptWorker(DraftDocument doc) {
             this.doc = doc;
         }
 

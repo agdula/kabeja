@@ -1,30 +1,30 @@
-/*
-   Copyright 2008 Simon Mieth
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
 package org.kabeja.svg.generators;
 
 import java.util.Iterator;
 import java.util.Map;
 
-import org.kabeja.dxf.DXFConstants;
-import org.kabeja.dxf.DXFEntity;
-import org.kabeja.dxf.DXFPolyline;
-import org.kabeja.dxf.DXFSpline;
-import org.kabeja.dxf.DXFVertex;
-import org.kabeja.dxf.helpers.DXFSplineConverter;
+import org.kabeja.common.DraftEntity;
+import org.kabeja.entities.Polyline;
+import org.kabeja.entities.Spline;
+import org.kabeja.entities.Vertex;
 import org.kabeja.math.MathUtils;
+import org.kabeja.math.SplineConverter;
 import org.kabeja.math.TransformContext;
 import org.kabeja.svg.SVGConstants;
 import org.kabeja.svg.SVGContext;
@@ -33,47 +33,48 @@ import org.kabeja.svg.SVGPathBoundaryGenerator;
 import org.kabeja.svg.SVGSAXGenerator;
 import org.kabeja.svg.SVGSAXGeneratorManager;
 import org.kabeja.svg.SVGUtils;
+import org.kabeja.util.Constants;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 
 public class SVGSplineGenerator extends AbstractSVGSAXGenerator
     implements SVGPathBoundaryGenerator {
-    public void toSAX(ContentHandler handler, Map svgContext, DXFEntity entity,
+    public void toSAX(ContentHandler handler, Map svgContext, DraftEntity entity,
         TransformContext transformContext) throws SAXException {
-        DXFSpline spline = (DXFSpline) entity;
-        DXFPolyline pline = DXFSplineConverter.toDXFPolyline(spline);
-        pline.setID(spline.getID());
+        Spline spline = (Spline) entity;
+        Polyline pline = SplineConverter.toPolyline(spline);
+       //TODO  pline.setID(spline.getID());
 
         SVGSAXGeneratorManager manager = (SVGSAXGeneratorManager) svgContext.get(SVGContext.SVGSAXGENERATOR_MANAGER);
 
         try {
-            SVGSAXGenerator gen = manager.getSVGGenerator(DXFConstants.ENTITY_TYPE_POLYLINE);
+            SVGSAXGenerator gen = manager.getSVGGenerator(Constants.ENTITY_TYPE_POLYLINE);
             gen.toSAX(handler, svgContext, pline, transformContext);
         } catch (SVGGenerationException e) {
             throw new SAXException(e);
         }
     }
 
-    public String getSVGPath(DXFEntity entity) {
+    public String getSVGPath(DraftEntity entity) {
         //use Polyline for now 
-        DXFSpline spline = (DXFSpline) entity;
-        DXFPolyline pline = DXFSplineConverter.toDXFPolyline(spline);
+        Spline spline = (Spline) entity;
+        Polyline pline = SplineConverter.toPolyline(spline);
         StringBuffer d = new StringBuffer();
 
-        DXFVertex last;
-        DXFVertex first;
+        Vertex last;
+        Vertex first;
 
-        Iterator i = pline.getVertexIterator();
-        first = last = (DXFVertex) i.next();
+        Iterator<Vertex> i = pline.getVertices().iterator();
+        first = last = (Vertex) i.next();
         d.append("M ");
-        d.append(last.getX());
+        d.append(last.getPoint().getX());
         d.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
-        d.append(last.getY());
+        d.append(last.getPoint().getY());
         d.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
 
         while (i.hasNext()) {
-            DXFVertex end = (DXFVertex) i.next();
+            Vertex end = (Vertex) i.next();
             d.append(getVertexPath(last, end, pline));
             last = end;
         }
@@ -90,8 +91,8 @@ public class SVGSplineGenerator extends AbstractSVGSAXGenerator
         return d.toString();
     }
 
-    protected String getVertexPath(DXFVertex start, DXFVertex end,
-        DXFPolyline pline) {
+    protected String getVertexPath(Vertex start, Vertex end,
+        Polyline pline) {
         StringBuffer d = new StringBuffer();
 
         if (start.getBulge() != 0) {
@@ -126,16 +127,16 @@ public class SVGSplineGenerator extends AbstractSVGSAXGenerator
                     d.append(" 1 ");
                 }
 
-                d.append(end.getX());
+                d.append(end.getPoint().getX());
                 d.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
-                d.append(end.getY());
+                d.append(end.getPoint().getY());
                 d.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
             }
         } else {
             d.append("L ");
-            d.append(SVGUtils.formatNumberAttribute(end.getX()));
+            d.append(SVGUtils.formatNumberAttribute(end.getPoint().getX()));
             d.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
-            d.append(SVGUtils.formatNumberAttribute(end.getY()));
+            d.append(SVGUtils.formatNumberAttribute(end.getPoint().getY()));
             d.append(SVGConstants.SVG_ATTRIBUTE_PATH_PLACEHOLDER);
         }
 

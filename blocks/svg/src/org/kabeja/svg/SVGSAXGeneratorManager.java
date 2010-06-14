@@ -1,25 +1,25 @@
-/*
-   Copyright 2008 Simon Mieth
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
 package org.kabeja.svg;
 
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.kabeja.dxf.DXFConstants;
 import org.kabeja.svg.generators.SVG3DFaceGenerator;
 import org.kabeja.svg.generators.SVG3DSolidGenerator;
 import org.kabeja.svg.generators.SVGArcGenerator;
@@ -47,6 +47,7 @@ import org.kabeja.svg.generators.SVGToleranceGenerator;
 import org.kabeja.svg.generators.SVGTraceGenerator;
 import org.kabeja.svg.generators.SVGViewportGenerator;
 import org.kabeja.svg.generators.SVGXLineGenerator;
+import org.kabeja.util.Constants;
 
 
 public class SVGSAXGeneratorManager {
@@ -81,60 +82,60 @@ public class SVGSAXGeneratorManager {
 
     protected void initialize() {
         // setup all generators here
-        this.generators.put(DXFConstants.ENTITY_TYPE_3DFACE,
+        this.generators.put(Constants.ENTITY_TYPE_3DFACE,
             new SVG3DFaceGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_3DSOLID,
+        this.generators.put(Constants.ENTITY_TYPE_3DSOLID,
             new SVG3DSolidGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_ARC, new SVGArcGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_ATTRIB,
+        this.generators.put(Constants.ENTITY_TYPE_ARC, new SVGArcGenerator());
+        this.generators.put(Constants.ENTITY_TYPE_ATTRIB,
             new SVGAttribGenerator());
 
-        this.generators.put(DXFConstants.ENTITY_TYPE_ATTDEF,
+        this.generators.put(Constants.ENTITY_TYPE_ATTDEF,
                 new SVGAttribDefinitionGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_CIRCLE,
+        this.generators.put(Constants.ENTITY_TYPE_CIRCLE,
             new SVGCircleGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_DIMENSION,
+        this.generators.put(Constants.ENTITY_TYPE_DIMENSION,
             new SVGDimensionGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_ELLIPSE,
+        this.generators.put(Constants.ENTITY_TYPE_ELLIPSE,
             new SVGEllipseGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_HATCH,
+        this.generators.put(Constants.ENTITY_TYPE_HATCH,
             new SVGHatchGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_IMAGE,
+        this.generators.put(Constants.ENTITY_TYPE_IMAGE,
             new SVGImageGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_INSERT,
+        this.generators.put(Constants.ENTITY_TYPE_INSERT,
             new SVGInsertGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_LEADER,
+        this.generators.put(Constants.ENTITY_TYPE_LEADER,
             new SVGLeaderGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_LINE,
+        this.generators.put(Constants.ENTITY_TYPE_LINE,
             new SVGLineGenerator());
 
-        this.generators.put(DXFConstants.ENTITY_TYPE_LWPOLYLINE,
+        this.generators.put(Constants.ENTITY_TYPE_LWPOLYLINE,
             new SVGLWPolylineGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_MLINE,
+        this.generators.put(Constants.ENTITY_TYPE_MLINE,
             new SVGMLineGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_MTEXT,
+        this.generators.put(Constants.ENTITY_TYPE_MTEXT,
             new SVGMTextGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_POINT,
+        this.generators.put(Constants.ENTITY_TYPE_POINT,
             new SVGPointGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_POLYLINE,
+        this.generators.put(Constants.ENTITY_TYPE_POLYLINE,
             new SVGPolylineGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_RAY, new SVGRayGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_SHAPE,
+        this.generators.put(Constants.ENTITY_TYPE_RAY, new SVGRayGenerator());
+        this.generators.put(Constants.ENTITY_TYPE_SHAPE,
             new SVGShapeGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_SOLID,
+        this.generators.put(Constants.ENTITY_TYPE_SOLID,
             new SVGSolidGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_SPLINE,
+        this.generators.put(Constants.ENTITY_TYPE_SPLINE,
             new SVGSplineGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_TEXT,
+        this.generators.put(Constants.ENTITY_TYPE_TEXT,
             new SVGTextGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_TOLERANCE,
+        this.generators.put(Constants.ENTITY_TYPE_TOLERANCE,
             new SVGToleranceGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_TRACE,
+        this.generators.put(Constants.ENTITY_TYPE_TRACE,
             new SVGTraceGenerator());
 
-        this.generators.put(DXFConstants.ENTITY_TYPE_VIEWPORT,
+        this.generators.put(Constants.ENTITY_TYPE_VIEWPORT,
             new SVGViewportGenerator());
-        this.generators.put(DXFConstants.ENTITY_TYPE_XLINE,
+        this.generators.put(Constants.ENTITY_TYPE_XLINE,
             new SVGXLineGenerator());
 
         //filter the boundarypathgenerators

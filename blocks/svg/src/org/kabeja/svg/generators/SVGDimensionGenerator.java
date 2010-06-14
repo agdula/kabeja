@@ -1,27 +1,28 @@
-/*
-   Copyright 2008 Simon Mieth
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
 package org.kabeja.svg.generators;
 
 import java.util.Map;
 
-import org.kabeja.dxf.DXFBlock;
-import org.kabeja.dxf.DXFDimension;
-import org.kabeja.dxf.DXFEntity;
-import org.kabeja.dxf.helpers.LineWidth;
-import org.kabeja.math.Point;
+import org.kabeja.common.Block;
+import org.kabeja.common.DraftEntity;
+import org.kabeja.common.LineWidth;
+import org.kabeja.entities.Dimension;
+import org.kabeja.math.Point3D;
 import org.kabeja.math.TransformContext;
 import org.kabeja.svg.SVGConstants;
 import org.kabeja.svg.SVGContext;
@@ -32,12 +33,12 @@ import org.xml.sax.helpers.AttributesImpl;
 
 
 public class SVGDimensionGenerator extends AbstractSVGSAXGenerator {
-    public void toSAX(ContentHandler handler, Map svgContext, DXFEntity entity,
+    public void toSAX(ContentHandler handler, Map svgContext, DraftEntity entity,
         TransformContext transformContext) throws SAXException {
-        DXFDimension dimension = (DXFDimension) entity;
+        Dimension dimension = (Dimension) entity;
 
-        DXFBlock block = dimension.getDXFDocument()
-        .getDXFBlock(dimension.getDimensionBlock());
+        Block block = dimension.getDocument()
+        .getBlock(dimension.getDimensionBlock());
         if (block != null) {
            
             AttributesImpl attr = new AttributesImpl();
@@ -49,7 +50,7 @@ public class SVGDimensionGenerator extends AbstractSVGSAXGenerator {
             buf.append((dimension.getInsertPoint().getY()));
             buf.append(")");
 
-            Point referencePoint = block.getReferencePoint();
+            Point3D referencePoint = block.getReferencePoint();
 
             if ((referencePoint.getX() != 0.0) ||
                     (referencePoint.getY() != 0.0)) {
@@ -79,7 +80,7 @@ public class SVGDimensionGenerator extends AbstractSVGSAXGenerator {
                 "xmlns:xlink", "CDATA", SVGConstants.XLINK_NAMESPACE);
             attr.addAttribute(SVGConstants.XLINK_NAMESPACE, "href",
                 "xlink:href", "CDATA",
-                "#" + SVGUtils.validateID(block.getID()));
+                "#" + SVGUtils.toValidateID(block.getID()));
 
             SVGUtils.emptyElement(handler, SVGConstants.SVG_USE, attr);
 

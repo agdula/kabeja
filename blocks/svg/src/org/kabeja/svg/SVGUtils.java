@@ -1,3 +1,18 @@
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 /*
  * Created on Jun 28, 2004
  *
@@ -10,10 +25,10 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Iterator;
 
-import org.kabeja.dxf.DXFLineType;
-import org.kabeja.dxf.helpers.LineWidth;
-import org.kabeja.dxf.helpers.StyledTextParagraph;
-import org.kabeja.dxf.helpers.TextDocument;
+import org.kabeja.common.LineType;
+import org.kabeja.common.LineWidth;
+import org.kabeja.entities.util.StyledTextParagraph;
+import org.kabeja.entities.util.TextDocument;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -58,9 +73,8 @@ public class SVGUtils {
 
 	public static void addAttribute(AttributesImpl attr, String name,
 			String value) {
-		// attr.addAttribute(SVGConstants.SVG_NAMESPACE, name,
-		// SVGConstants.SVG_PREFIX+":"+name , DEFAUL_ATTRIBUTE_TYPE,
-		// value);
+
+		//we have remove to override
 		int index = attr.getIndex(name);
 		if(index>-1){
 			attr.removeAttribute(index);
@@ -81,12 +95,12 @@ public class SVGUtils {
 	}
 
 	public static void addStrokeDashArrayAttribute(AttributesImpl attr,
-			DXFLineType ltype) {
+			LineType ltype) {
 		addStrokeDashArrayAttribute(attr, ltype, 1.0);
 	}
 
 	public static void addStrokeDashArrayAttribute(AttributesImpl attr,
-			DXFLineType ltype, double scale) {
+			LineType ltype, double scale) {
 		if (ltype != null) {
 			double[] pattern = ltype.getPattern();
 
@@ -122,83 +136,79 @@ public class SVGUtils {
 	 * @param id
 	 * @return a id which should be valid, but may be not unique.
 	 */
-	public static String validateID(String id) {
-		if (id.length() > 0) {
-			StringBuffer buf = new StringBuffer();
-			char first = id.charAt(0);
-
-			if (!Character.isLetter(first) && (first != ':')) {
-				buf.append(DEFAULT_ID_NAME_PREFIX);
-			}
-
-			for (int i = 0; i < id.length(); i++) {
-				char c = id.charAt(i);
-
-				// TODO we have to allow here CombinigChar and Extender too
-				if (Character.isLetter(c) || Character.isDigit(c) || (c == '-')
-						|| (c == '.') || (c == ':')) {
-					buf.append(c);
-				} else {
-					// normally we have to check all id to guarantee it will be
-					// a
-					// unique,
-					// but we convert the current char to a integer with
-					// "_"-prefix and "_" suffix
-					buf.append(DEFAULT_CONVERT_MARKER_CHAR);
-					buf.append((int) c);
-					buf.append(DEFAULT_CONVERT_MARKER_CHAR);
-				}
-			}
-
-			return buf.toString();
-		} else {
-			return id;
-		}
+	public static String toValidateID(long id) {
+		return DEFAULT_ID_NAME_PREFIX+id;
 	}
 
+	   /**
+     * SVG is XML and needs valid id attributes look at <a
+     * href="http://www.w3.org/TR/2000/REC-xml-20001006#sec-common-syn">XML-Recommandation
+     * </a>.
+     * 
+     * @param id
+     * @return a id which should be valid, but may be not unique.
+     */
+    public static String validateID(String id) {
+        if (id.length() > 0) {
+            StringBuffer buf = new StringBuffer();
+            char first = id.charAt(0);
+
+            if (!Character.isLetter(first) && (first != ':')) {
+                buf.append(DEFAULT_ID_NAME_PREFIX);
+            }
+
+            for (int i = 0; i < id.length(); i++) {
+                char c = id.charAt(i);
+
+                // TODO we have to allow here CombinigChar and Extender too
+                if (Character.isLetter(c) || Character.isDigit(c) || (c == '-')
+                        || (c == '.') || (c == ':')) {
+                    buf.append(c);
+                } else {
+                    // normally we have to check all id to guarantee it will be
+                    // a
+                    // unique,
+                    // but we convert the current char to a integer with
+                    // "_"-prefix and "_" suffix
+                    buf.append(DEFAULT_CONVERT_MARKER_CHAR);
+                    buf.append((int) c);
+                    buf.append(DEFAULT_CONVERT_MARKER_CHAR);
+                }
+            }
+
+            return buf.toString();
+        } else {
+            return id;
+        }
+	
+	
+    }
+	
+	
+	
+	
+	
+	
 	/**
 	 * This will reverse a validated ID back to DXF id.
 	 * 
 	 * @param id
 	 * @return
 	 */
-	public static String reverseID(String id) {
+	public static long reverseID(String id) {
 		if (id.length() > 0) {
-			StringBuffer buf = new StringBuffer();
-			boolean marker = false;
-
-			StringBuffer number = new StringBuffer();
-			for (int i = 0; i < id.length(); i++) {
-				char c = id.charAt(i);
-
-				if (c == DEFAULT_CONVERT_MARKER_CHAR) {
-					if (marker) {
-						if (number.length() > 0) {
-							int x = Integer.parseInt(number.toString());
-							buf.append((char) x);
-							number.delete(0, number.length());
-						}
-						marker = false;
-					} else {
-						marker = true;
-					}
-				} else if (marker) {
-					if (Character.isDigit(c)) {
-						number.append(c);
-					}
-				} else {
-					buf.append(c);
-				}
+			if (id.startsWith(DEFAULT_ID_NAME_PREFIX)) {
+			    try{
+			       return Long.parseLong(id.substring(DEFAULT_ID_NAME_PREFIX.length()-1));
+			    }catch(Exception e){
+			        //no dxf generated id
+			        e.printStackTrace();
+			        
+			    }
 			}
 
-			if (buf.toString().startsWith(DEFAULT_ID_NAME_PREFIX)) {
-				buf.delete(0, DEFAULT_ID_NAME_PREFIX.length());
-			}
-			return buf.toString();
-
-		} else {
-			return id;
-		}
+		} 
+		return -1;
 	}
 
 	public static void textDocumentToSAX(ContentHandler handler,

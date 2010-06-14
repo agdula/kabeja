@@ -1,22 +1,22 @@
-/*
-   Copyright 2005 Simon Mieth
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
 package org.kabeja;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -48,6 +48,7 @@ public class Loader {
     
     
     public Loader() {
+    	//default classpath relative to this 
 		this.classpathEntries.add("lib");
 		this.classpathEntries.add("classes");
 
@@ -66,26 +67,15 @@ public class Loader {
         try {
             Class clazz = cl.loadClass(this.mainClass);
             Object obj = clazz.newInstance();
-
+      
+            
             // init the project
             Method method = clazz.getDeclaredMethod("main",
                     new Class[] { args.getClass() });
             method.invoke(obj, new Object[] { args });
-        } catch (ClassNotFoundException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (SecurityException e1) {
-            e1.printStackTrace();
-        } catch (IllegalArgumentException e1) {
-            e1.printStackTrace();
-        } catch (NoSuchMethodException e1) {
-            e1.printStackTrace();
-        } catch (InvocationTargetException e1) {
-            e1.printStackTrace();
-        }
+        } 
     }
 
     protected URL[] getClasspath() {
@@ -134,9 +124,12 @@ public class Loader {
                 list.add(args[i]);
             }
         }
-
+        
         return (String[]) list.toArray(new String[list.size()]);
     }
+    
+    
+ 
     
     
     protected void addPathEntries(String path){

@@ -1,27 +1,28 @@
-/*
-   Copyright 2008 Simon Mieth
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
 package org.kabeja.svg.generators;
 
 import java.util.Map;
 
-import org.kabeja.dxf.Bounds;
-import org.kabeja.dxf.DXFEntity;
-import org.kabeja.dxf.DXFMText;
-import org.kabeja.dxf.DXFStyle;
-import org.kabeja.math.Point;
+import org.kabeja.common.DraftEntity;
+import org.kabeja.common.Style;
+import org.kabeja.entities.MText;
+import org.kabeja.math.Bounds;
+import org.kabeja.math.Point3D;
 import org.kabeja.math.TransformContext;
 import org.kabeja.svg.SVGConstants;
 import org.kabeja.svg.SVGContext;
@@ -32,27 +33,27 @@ import org.xml.sax.helpers.AttributesImpl;
 
 
 public class SVGMTextGenerator extends AbstractSVGSAXGenerator {
-    public void toSAX(ContentHandler handler, Map svgContext, DXFEntity entity,
+    public void toSAX(ContentHandler handler, Map svgContext, DraftEntity entity,
         TransformContext transformContext) throws SAXException {
     
 
     	
-    	DXFMText mText = (DXFMText) entity;
+    	MText mText = (MText) entity;
 
         AttributesImpl attr = new AttributesImpl();
 
-        Point p = mText.getInsertPoint();
-        Point alignmentPoint = new Point(p.getX(), p.getY(), p.getZ());
+        Point3D p = mText.getInsertPoint();
+        Point3D alignmentPoint = new Point3D(p.getX(), p.getY(), p.getZ());
 
         boolean notUpsideDown = true;
 
         // boolean top=false;
         // boolean bottom=false;
-        DXFStyle style = null;
+        Style style = null;
 
         if ((mText.getTextStyle().length() > 0) &&
-                ((style = mText.getDXFDocument()
-                                   .getDXFStyle(mText.getTextStyle())) != null)) {
+                ((style = mText.getDocument()
+                                   .getStyle(mText.getTextStyle())) != null)) {
             if (style.isBackward()) {
                 SVGUtils.addAttribute(attr, "writing-mode", "rl");
             } else {
@@ -68,28 +69,28 @@ public class SVGMTextGenerator extends AbstractSVGSAXGenerator {
 
         if (notUpsideDown) {
             switch (mText.getAlignment()) {
-            case DXFMText.ATTACHMENT_TOP_LEFT:
+            case MText.ATTACHMENT_TOP_LEFT:
                 SVGUtils.addAttribute(attr,
                     SVGConstants.SVG_ATTRIBUTE_TEXT_ANCHOR, "start");
 
                 // top = true;
                 break;
 
-            case DXFMText.ATTACHMENT_TOP_CENTER:
+            case MText.ATTACHMENT_TOP_CENTER:
                 SVGUtils.addAttribute(attr,
                     SVGConstants.SVG_ATTRIBUTE_TEXT_ANCHOR, "middle");
 
                 // top = true;
                 break;
 
-            case DXFMText.ATTACHMENT_TOP_RIGHT:
+            case MText.ATTACHMENT_TOP_RIGHT:
                 SVGUtils.addAttribute(attr,
                     SVGConstants.SVG_ATTRIBUTE_TEXT_ANCHOR, "end");
 
                 // top = true;
                 break;
 
-            case DXFMText.ATTACHMENT_MIDDLE_LEFT:
+            case MText.ATTACHMENT_MIDDLE_LEFT:
                 SVGUtils.addAttribute(attr,
                     SVGConstants.SVG_ATTRIBUTE_TEXT_ANCHOR, "start");
                 SVGUtils.addAttribute(attr,
@@ -97,7 +98,7 @@ public class SVGMTextGenerator extends AbstractSVGSAXGenerator {
 
                 break;
 
-            case DXFMText.ATTACHMENT_MIDDLE_CENTER:
+            case MText.ATTACHMENT_MIDDLE_CENTER:
                 SVGUtils.addAttribute(attr,
                     SVGConstants.SVG_ATTRIBUTE_TEXT_ANCHOR, "middle");
                 SVGUtils.addAttribute(attr,
@@ -105,7 +106,7 @@ public class SVGMTextGenerator extends AbstractSVGSAXGenerator {
 
                 break;
 
-            case DXFMText.ATTACHMENT_MIDDLE_RIGHT:
+            case MText.ATTACHMENT_MIDDLE_RIGHT:
                 SVGUtils.addAttribute(attr,
                     SVGConstants.SVG_ATTRIBUTE_TEXT_ANCHOR, "end");
                 SVGUtils.addAttribute(attr,
@@ -113,20 +114,20 @@ public class SVGMTextGenerator extends AbstractSVGSAXGenerator {
 
                 break;
 
-            case DXFMText.ATTACHMENT_BOTTOM_LEFT:
+            case MText.ATTACHMENT_BOTTOM_LEFT:
                 SVGUtils.addAttribute(attr,
                     SVGConstants.SVG_ATTRIBUTE_TEXT_ANCHOR, "start");
 
                 // bottom = true;
                 break;
 
-            case DXFMText.ATTACHMENT_BOTTOM_CENTER:
+            case MText.ATTACHMENT_BOTTOM_CENTER:
                 SVGUtils.addAttribute(attr,
                     SVGConstants.SVG_ATTRIBUTE_TEXT_ANCHOR, "middle");
 
                 break;
 
-            case DXFMText.ATTACHMENT_BOTTOM_RIGHT:
+            case MText.ATTACHMENT_BOTTOM_RIGHT:
                 SVGUtils.addAttribute(attr,
                     SVGConstants.SVG_ATTRIBUTE_TEXT_ANCHOR, "end");
 

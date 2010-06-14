@@ -1,28 +1,30 @@
-/*
-   Copyright 2005 Simon Mieth
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
 package org.kabeja.processing;
 
 import java.util.Iterator;
 import java.util.Map;
 
-import org.kabeja.dxf.Bounds;
-import org.kabeja.dxf.DXFDocument;
-import org.kabeja.dxf.DXFEntity;
-import org.kabeja.dxf.DXFLayer;
-import org.kabeja.dxf.DXFViewport;
+import org.kabeja.DraftDocument;
+import org.kabeja.common.DraftEntity;
+import org.kabeja.common.Layer;
+import org.kabeja.common.Type;
+import org.kabeja.entities.Viewport;
+import org.kabeja.math.Bounds;
 
 
 /**
@@ -30,20 +32,15 @@ import org.kabeja.dxf.DXFViewport;
  *
  */
 public class ViewportFilter extends AbstractPostProcessor {
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.kabeja.tools.PostProcessor#process(org.kabeja.dxf.DXFDocument,
-     *      java.util.Map)
-     */
-    public void process(DXFDocument doc, Map context) throws ProcessorException {
-        DXFViewport viewport = null;
-        Iterator i = doc.getDXFViewportIterator();
+
+    public void process(DraftDocument doc, Map<String,Object> context) throws ProcessorException {
+        Viewport viewport = null;
+        Iterator<Viewport> i = doc.getViewports().iterator();
 
         boolean found = false;
 
         while (i.hasNext() && !found) {
-            DXFViewport v = (DXFViewport) i.next();
+            Viewport v =i.next();
 
             if (v.isActive()) {
                 viewport = v;
@@ -69,19 +66,12 @@ public class ViewportFilter extends AbstractPostProcessor {
         }
     }
 
-    protected void filterEntities(Bounds b, DXFDocument doc) {
-        Iterator i = doc.getDXFLayerIterator();
-
-        while (i.hasNext()) {
-            DXFLayer l = (DXFLayer) i.next();
-            Iterator ti = l.getDXFEntityTypeIterator();
-
-            while (ti.hasNext()) {
-                String type = (String) ti.next();
-                Iterator ei = l.getDXFEntities(type).iterator();
-
+    protected void filterEntities(Bounds b, DraftDocument doc) {
+      for( Layer l:doc.getLayers()){
+         for(Type<?> type:l.getEntityTypes()){
+                Iterator<? extends DraftEntity> ei = l.getEntitiesByType(type).iterator();
                 while (ei.hasNext()) {
-                    DXFEntity entity = (DXFEntity) ei.next();
+                    DraftEntity entity = (DraftEntity) ei.next();
                     Bounds currentBounds = entity.getBounds();
 
                     if (!b.contains(currentBounds)) {
@@ -92,10 +82,5 @@ public class ViewportFilter extends AbstractPostProcessor {
         }
     }
 
-    /* (non-Javadoc)
-         * @see org.kabeja.tools.PostProcessor#setProperties(java.util.Map)
-         */
-    public void setProperties(Map properties) {
-        // TODO Auto-generated method stub
-    }
+
 }

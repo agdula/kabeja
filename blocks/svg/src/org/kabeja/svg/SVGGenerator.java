@@ -1,3 +1,18 @@
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 /*
  Copyright 2005 Simon Mieth
 
@@ -15,29 +30,27 @@
  */
 package org.kabeja.svg;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 
-import org.kabeja.dxf.Bounds;
-import org.kabeja.dxf.DXFBlock;
-import org.kabeja.dxf.DXFColor;
-import org.kabeja.dxf.DXFConstants;
-import org.kabeja.dxf.DXFEntity;
-import org.kabeja.dxf.DXFLayer;
-import org.kabeja.dxf.DXFLineType;
-import org.kabeja.dxf.DXFStyle;
-import org.kabeja.dxf.DXFVariable;
-import org.kabeja.dxf.helpers.DXFUtils;
-import org.kabeja.dxf.helpers.LineWidth;
-import org.kabeja.dxf.objects.DXFDictionary;
-import org.kabeja.dxf.objects.DXFLayout;
+import org.kabeja.common.Block;
+import org.kabeja.common.Color;
+import org.kabeja.common.DraftEntity;
+import org.kabeja.common.Layer;
+import org.kabeja.common.LineWidth;
+import org.kabeja.common.Style;
+import org.kabeja.common.Type;
+import org.kabeja.common.Variable;
+import org.kabeja.entities.util.Utils;
+import org.kabeja.math.Bounds;
 import org.kabeja.math.TransformContext;
+import org.kabeja.objects.Dictionary;
+import org.kabeja.objects.Layout;
 import org.kabeja.svg.generators.SVGStyleGenerator;
+import org.kabeja.util.Constants;
 import org.kabeja.xml.AbstractSAXGenerator;
 import org.kabeja.xml.XMLConstants;
-import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
@@ -117,7 +130,7 @@ public class SVGGenerator extends AbstractSAXGenerator {
 
     private String marginSettings;
 
-    private String outputStyleName = DXFConstants.LAYOUT_DEFAULT_NAME;
+    private String outputStyleName = Constants.LAYOUT_DEFAULT_NAME;
 
     protected SVGSAXGeneratorManager manager;
 
@@ -134,40 +147,31 @@ public class SVGGenerator extends AbstractSAXGenerator {
     protected void setupProperties() {
 
         if (this.context == null) {
-            this.context = new HashMap();
-        } else {
-            // copy setup from context to
-            // properties
-            Iterator i = this.context.keySet().iterator();
-
-            while (i.hasNext()) {
-                String key = (String) i.next();
-                this.properties.put(key, this.context.get(key));
-            }
-        }
+            this.context = new HashMap<String,Object>();
+        } 
 
         // setup the properties
 
         // the margin
         if (this.properties.containsKey(PROPERTY_MARGIN)) {
-            this.marginSettings = (String) this.properties.get(PROPERTY_MARGIN);
+            this.marginSettings =  this.properties.get(PROPERTY_MARGIN);
         }
 
         if (this.properties.containsKey(PROPERTY_OVERFLOW)) {
             this.overflow = Boolean.valueOf(
-                    (String) this.properties.get(PROPERTY_OVERFLOW))
+                    this.properties.get(PROPERTY_OVERFLOW))
                     .booleanValue();
         }
 
         // parse the line width property
         if (this.properties.containsKey(PROPERTY_STROKE_WIDTH)) {
             LineWidth lw = new LineWidth();
-            String strokeWidth = (String) this.properties
+            String strokeWidth =  this.properties
                     .get(PROPERTY_STROKE_WIDTH);
 
             lw.setValue(Double.parseDouble(strokeWidth));
 
-            String linewidthType = (String) this.properties
+            String linewidthType = this.properties
                     .get(PROPERTY_STROKE_WIDTH_TYPE);
             if (PROPERTY_STROKE_WIDTH_TYPE_VALUE_PERCENT.equals(linewidthType)) {
                 lw.setType(LineWidth.TYPE_PERCENT);
@@ -264,13 +268,13 @@ public class SVGGenerator extends AbstractSAXGenerator {
                 }
             } else if (this.outputStyle == PROPERTY_DOCUMENT_OUTPUT_STYLE_LAYOUT) {
                 // check for a layout and get the papersize
-                DXFDictionary dict = (DXFDictionary) this.doc
-                        .getRootDXFDictionary().getDXFObjectByName(
-                                DXFConstants.DICTIONARY_KEY_LAYOUT);
+                Dictionary dict = (Dictionary) this.doc
+                        .getRootDictionary().getObjectByName(
+                                Constants.DICTIONARY_KEY_LAYOUT);
 
                 if (dict != null) {
-                    DXFLayout layout = (DXFLayout) dict
-                            .getDXFObjectByName(this.outputStyleName);
+                    Layout layout = (Layout) dict
+                            .getObjectByName(this.outputStyleName);
 
                     if (layout != null) {
                         Bounds paper = layout.getLimits();
@@ -279,17 +283,17 @@ public class SVGGenerator extends AbstractSAXGenerator {
                         String units = "";
 
                         switch (layout.getPaperUnit()) {
-                        case DXFConstants.PAPER_UNIT_INCH:
+                        case Constants.PAPER_UNIT_INCH:
                             units = "in";
 
                             break;
 
-                        case DXFConstants.PAPER_UNIT_MILLIMETER:
+                        case Constants.PAPER_UNIT_MILLIMETER:
                             units = "mm";
 
                             break;
 
-                        case DXFConstants.PAPER_UNIT_PIXEL:
+                        case Constants.PAPER_UNIT_PIXEL:
                             units = "px";
 
                             break;
@@ -371,18 +375,12 @@ public class SVGGenerator extends AbstractSAXGenerator {
 
             context.put(SVGContext.DOT_LENGTH, new Double(dotLength));
 
-            Iterator i = this.doc.getDXFBlockIterator();
-
-            while (i.hasNext()) {
-                DXFBlock block = (DXFBlock) i.next();
+           for(Block block :doc.getBlocks()){
                 this.blockToSAX(block, null);
             }
 
             // maybe there is a fontdescription available from DXFStyle
-            i = this.doc.getDXFStyleIterator();
-
-            while (i.hasNext()) {
-                DXFStyle style = (DXFStyle) i.next();
+           for(Style style:doc.getStyles()){
                 SVGStyleGenerator.toSAX(handler, context, style);
             }
 
@@ -410,7 +408,7 @@ public class SVGGenerator extends AbstractSAXGenerator {
             } else {
                 double sw = (bounds.getWidth() + bounds.getHeight()) / 2
                         * SVGConstants.DEFAULT_STROKE_WIDTH_PERCENT;
-                double defaultSW = ((double) DXFConstants.ENVIRONMENT_VARIABLE_LWDEFAULT) / 100.0;
+                double defaultSW = ((double) Constants.ENVIRONMENT_VARIABLE_LWDEFAULT) / 100.0;
 
                 if (sw > defaultSW) {
                     sw = defaultSW;
@@ -430,20 +428,20 @@ public class SVGGenerator extends AbstractSAXGenerator {
             SVGUtils.startElement(handler, SVGConstants.SVG_GROUP, attr);
 
             if (this.useModelSpaceBlock) {
-                DXFBlock block = this.doc
-                        .getDXFBlock(DXFConstants.BLOCK_MODELSPACE);
+                Block block = this.doc
+                        .getBlock(Constants.BLOCK_MODELSPACE);
                 this.blockToSAX(block, null);
             } else if (this.usePaperSpaceBlock) {
-                DXFBlock block = this.doc
-                        .getDXFBlock(DXFConstants.BLOCK_PAPERSPACE);
+                Block block = this.doc
+                        .getBlock(Constants.BLOCK_PAPERSPACE);
                 this.blockToSAX(block, null);
             } else {
 
                 // the layers as container g-elements
-                i = DXFUtils.sortedLayersByZIndexIterator(this.doc
-                        .getDXFLayerIterator());
+                Iterator<Layer> i = Utils.sortedLayersByZIndexIterator(this.doc
+                        .getLayers().iterator());
                 while (i.hasNext()) {
-                    DXFLayer layer = (DXFLayer) i.next();
+                    Layer layer = (Layer) i.next();
                     if (this.boundsRule == PROPERTY_DOCUMENT_BOUNDS_RULE_PAPERSPACE) {
                         // out put only the paper space maybe with views to
                         // model space
@@ -463,23 +461,20 @@ public class SVGGenerator extends AbstractSAXGenerator {
         }
     }
 
-    protected void blockToSAX(DXFBlock block, TransformContext transformContext)
+    protected void blockToSAX(Block block, TransformContext transformContext)
             throws SAXException {
         AttributesImpl attr = new AttributesImpl();
         // SVGUtils.addAttribute(attr, SVGConstants.XML_ID, SVGUtils
         // .validateID(block.getName()));
         SVGUtils.addAttribute(attr, SVGConstants.XML_ID, SVGUtils
-                .validateID(block.getID()));
+                .toValidateID(block.getID()));
 
         SVGUtils.startElement(handler, SVGConstants.SVG_GROUP, attr);
 
-        Iterator i = block.getDXFEntitiesIterator();
-
-        while (i.hasNext()) {
-            DXFEntity entity = (DXFEntity) i.next();
+     for( DraftEntity entity:block.getEntities()){
 
             try {
-                SVGSAXGenerator gen = manager.getSVGGenerator(entity.getType());
+                SVGSAXGenerator gen = manager.getSVGGenerator(entity.getType().getHandle());
                 gen.toSAX(handler, this.context, entity, transformContext);
             } catch (SVGGenerationException e) {
                 e.printStackTrace();
@@ -561,14 +556,14 @@ public class SVGGenerator extends AbstractSAXGenerator {
             // first the user based limits of the paperspace
             bounds = new Bounds();
 
-            if (this.doc.getDXFHeader().hasVariable(
-                    DXFConstants.HEADER_VARIABLE_PEXTMAX)
-                    && this.doc.getDXFHeader().hasVariable(
-                            DXFConstants.HEADER_VARIABLE_PEXTMIN) && useLimits) {
-                DXFVariable min = this.doc.getDXFHeader().getVariable(
-                        DXFConstants.HEADER_VARIABLE_PEXTMIN);
-                DXFVariable max = this.doc.getDXFHeader().getVariable(
-                        DXFConstants.HEADER_VARIABLE_PEXTMAX);
+            if (this.doc.getHeader().hasVariable(
+                    Constants.HEADER_VARIABLE_PEXTMAX)
+                    && this.doc.getHeader().hasVariable(
+                            Constants.HEADER_VARIABLE_PEXTMIN) && useLimits) {
+                Variable min = this.doc.getHeader().getVariable(
+                        Constants.HEADER_VARIABLE_PEXTMIN);
+                Variable max = this.doc.getHeader().getVariable(
+                        Constants.HEADER_VARIABLE_PEXTMAX);
 
                 bounds.setMinimumX(min.getDoubleValue("10"));
                 bounds.setMinimumY(min.getDoubleValue("20"));
@@ -578,14 +573,14 @@ public class SVGGenerator extends AbstractSAXGenerator {
 
             if ((!bounds.isValid() || (bounds.getWidth() == 0.0) || (bounds
                     .getHeight() == 0.0))
-                    && this.doc.getDXFHeader().hasVariable(
-                            DXFConstants.HEADER_VARIABLE_PLIMMIN)
-                    && this.doc.getDXFHeader().hasVariable(
-                            DXFConstants.HEADER_VARIABLE_PLIMMAX) && useLimits) {
-                DXFVariable min = this.doc.getDXFHeader().getVariable(
-                        DXFConstants.HEADER_VARIABLE_PLIMMIN);
-                DXFVariable max = this.doc.getDXFHeader().getVariable(
-                        DXFConstants.HEADER_VARIABLE_PLIMMAX);
+                    && this.doc.getHeader().hasVariable(
+                            Constants.HEADER_VARIABLE_PLIMMIN)
+                    && this.doc.getHeader().hasVariable(
+                            Constants.HEADER_VARIABLE_PLIMMAX) && useLimits) {
+                Variable min = this.doc.getHeader().getVariable(
+                        Constants.HEADER_VARIABLE_PLIMMIN);
+                Variable max = this.doc.getHeader().getVariable(
+                        Constants.HEADER_VARIABLE_PLIMMAX);
 
                 bounds.setMinimumX(min.getDoubleValue("10"));
                 bounds.setMinimumY(min.getDoubleValue("20"));
@@ -602,14 +597,14 @@ public class SVGGenerator extends AbstractSAXGenerator {
             // first the user based limits of the modelspace
             bounds = new Bounds();
 
-            if (this.doc.getDXFHeader().hasVariable(
-                    DXFConstants.HEADER_VARIABLE_EXTMIN)
-                    && this.doc.getDXFHeader().hasVariable(
-                            DXFConstants.HEADER_VARIABLE_EXTMAX) && useLimits) {
-                DXFVariable min = this.doc.getDXFHeader().getVariable(
-                        DXFConstants.HEADER_VARIABLE_EXTMIN);
-                DXFVariable max = this.doc.getDXFHeader().getVariable(
-                        DXFConstants.HEADER_VARIABLE_EXTMAX);
+            if (this.doc.getHeader().hasVariable(
+                    Constants.HEADER_VARIABLE_EXTMIN)
+                    && this.doc.getHeader().hasVariable(
+                            Constants.HEADER_VARIABLE_EXTMAX) && useLimits) {
+                Variable min = this.doc.getHeader().getVariable(
+                        Constants.HEADER_VARIABLE_EXTMIN);
+                Variable max = this.doc.getHeader().getVariable(
+                        Constants.HEADER_VARIABLE_EXTMAX);
 
                 bounds.setMinimumX(min.getDoubleValue("10"));
                 bounds.setMinimumY(min.getDoubleValue("20"));
@@ -619,14 +614,14 @@ public class SVGGenerator extends AbstractSAXGenerator {
 
             if ((!bounds.isValid() || (bounds.getWidth() == 0.0) || (bounds
                     .getHeight() == 0.0))
-                    && this.doc.getDXFHeader().hasVariable(
-                            DXFConstants.HEADER_VARIABLE_LIMMIN)
-                    && this.doc.getDXFHeader().hasVariable(
-                            DXFConstants.HEADER_VARIABLE_LIMMAX) && useLimits) {
-                DXFVariable min = this.doc.getDXFHeader().getVariable(
-                        DXFConstants.HEADER_VARIABLE_LIMMIN);
-                DXFVariable max = this.doc.getDXFHeader().getVariable(
-                        DXFConstants.HEADER_VARIABLE_LIMMAX);
+                    && this.doc.getHeader().hasVariable(
+                            Constants.HEADER_VARIABLE_LIMMIN)
+                    && this.doc.getHeader().hasVariable(
+                            Constants.HEADER_VARIABLE_LIMMAX) && useLimits) {
+                Variable min = this.doc.getHeader().getVariable(
+                        Constants.HEADER_VARIABLE_LIMMIN);
+                Variable max = this.doc.getHeader().getVariable(
+                        Constants.HEADER_VARIABLE_LIMMAX);
 
                 bounds.setMinimumX(min.getDoubleValue("10"));
                 bounds.setMinimumY(min.getDoubleValue("20"));
@@ -654,8 +649,8 @@ public class SVGGenerator extends AbstractSAXGenerator {
 
         // check for model space block
         if (!bounds.isValid()) {
-            DXFBlock block = this.doc
-                    .getDXFBlock(DXFConstants.BLOCK_MODELSPACE);
+            Block block = this.doc
+                    .getBlock(Constants.BLOCK_MODELSPACE);
             if (block != null) {
                 bounds = block.getBounds();
                 this.useModelSpaceBlock = true;
@@ -664,8 +659,8 @@ public class SVGGenerator extends AbstractSAXGenerator {
 
         // check for the paper space block
         if (!bounds.isValid()) {
-            DXFBlock block = this.doc
-                    .getDXFBlock(DXFConstants.BLOCK_PAPERSPACE);
+            Block block = this.doc
+                    .getBlock(Constants.BLOCK_PAPERSPACE);
             if (block != null) {
                 bounds = block.getBounds();
                 this.usePaperSpaceBlock = true;
@@ -693,7 +688,7 @@ public class SVGGenerator extends AbstractSAXGenerator {
         this.manager = manager;
     }
 
-    protected void layerToSAX(DXFLayer layer, boolean onModelspace)
+    protected void layerToSAX(Layer layer, boolean onModelspace)
             throws SAXException {
         AttributesImpl attr = new AttributesImpl();
 
@@ -707,7 +702,7 @@ public class SVGGenerator extends AbstractSAXGenerator {
         // .validateID(layer.getName()));
 
         SVGUtils.addAttribute(attr, SVGConstants.SVG_ATTRIBUTE_COLOR, "rgb("
-                + DXFColor.getRGBString(Math.abs(layer.getColor())) + ")");
+                + Color.getRGBString(Math.abs(layer.getColor())) + ")");
         SVGUtils.addAttribute(attr, SVGConstants.SVG_ATTRIBUTE_STROKE,
                 SVGConstants.SVG_ATTRIBUTE_VALUE_CURRENTCOLOR);
 
@@ -719,12 +714,9 @@ public class SVGGenerator extends AbstractSAXGenerator {
                     SVGConstants.SVG_ATTRIBUTE_VISIBILITY_VALUE_HIDDEN);
         }
 
-        String lt = layer.getLineType();
-
-        if (lt.length() > 0) {
-            DXFLineType ltype = doc.getDXFLineType(lt);
-            SVGUtils.addStrokeDashArrayAttribute(attr, ltype);
-        }
+      
+        SVGUtils.addStrokeDashArrayAttribute(attr, layer.getLineType());
+       
 
         // the stroke-width
         int lineWeight = layer.getLineWeight();
@@ -748,19 +740,12 @@ public class SVGGenerator extends AbstractSAXGenerator {
                 new AttributesImpl());
         SVGUtils.characters(handler, layer.getName());
         SVGUtils.endElement(handler, SVGConstants.SVG_TITLE);
-        Iterator types = layer.getDXFEntityTypeIterator();
-
-        while (types.hasNext()) {
-            String type = (String) types.next();
-            ArrayList list = (ArrayList) layer.getDXFEntities(type);
+    for(  Type<? extends DraftEntity> type:layer.getEntityTypes()){
+         
 
             try {
-                SVGSAXGenerator gen = this.manager.getSVGGenerator(type);
-
-                Iterator i = list.iterator();
-
-                while (i.hasNext()) {
-                    DXFEntity entity = (DXFEntity) i.next();
+                SVGSAXGenerator gen = this.manager.getSVGGenerator(type.getHandle());
+             for(  DraftEntity entity:layer.getEntitiesByType(type)){
                     boolean v = entity.isVisibile();
                     entity.setVisibile(!layer.isFrozen());
 

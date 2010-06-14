@@ -1,26 +1,27 @@
-/*
-   Copyright 2008 Simon Mieth
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
- */
 package org.kabeja.svg.generators;
 
 import java.util.Map;
 
-import org.kabeja.dxf.DXF3DFace;
-import org.kabeja.dxf.DXFDocument;
-import org.kabeja.dxf.DXFEntity;
-import org.kabeja.math.Point;
+import org.kabeja.DraftDocument;
+import org.kabeja.common.DraftEntity;
+import org.kabeja.entities.Face3D;
+import org.kabeja.math.Point3D;
 import org.kabeja.math.TransformContext;
 import org.kabeja.svg.SVGConstants;
 import org.kabeja.svg.SVGUtils;
@@ -33,41 +34,41 @@ public class SVG3DFaceGenerator extends AbstractSVGSAXGenerator {
 		super();
 	}
 
-	public void toSAX(ContentHandler handler, Map svgContext, DXFEntity entity,
+	public void toSAX(ContentHandler handler, Map svgContext, DraftEntity entity,
 			TransformContext transformContext) throws SAXException {
 		// all edges are visible
-		DXF3DFace face = (DXF3DFace) entity;
-		DXFDocument doc = face.getDXFDocument();
+		Face3D face = (Face3D) entity;
+		DraftDocument doc = face.getDocument();
 
-		if ((doc.getDXFHeader().hasVariable("$SPLFRAME") && (doc.getDXFHeader()
+		if ((doc.getHeader().hasVariable("$SPLFRAME") && (doc.getHeader()
 				.getVariable("$SPLFRAME").getIntegerValue("70") == 1))
 				|| (face.getFlags() == 0)) {
 			AttributesImpl attr = new AttributesImpl();
 
 			StringBuffer points = new StringBuffer();
 
-			Point point1 = face.getPoint1();
+			Point3D point1 = face.getPoint1();
 
 			points.append(SVGUtils.formatNumberAttribute(point1.getX()));
 			points.append(",");
 			points.append(SVGUtils.formatNumberAttribute(point1.getY()));
 			points.append(" ");
 
-			Point point2 = face.getPoint2();
+			Point3D point2 = face.getPoint2();
 
 			points.append(SVGUtils.formatNumberAttribute(point2.getX()));
 			points.append(",");
 			points.append(SVGUtils.formatNumberAttribute(point2.getY()));
 			points.append(" ");
 
-			Point point3 = face.getPoint3();
+			Point3D point3 = face.getPoint3();
 
 			points.append(SVGUtils.formatNumberAttribute(point3.getX()));
 			points.append(",");
 			points.append(SVGUtils.formatNumberAttribute(point3.getY()));
 			points.append(" ");
 
-			Point point4 = face.getPoint4();
+			Point3D point4 = face.getPoint4();
 
 			points.append(SVGUtils.formatNumberAttribute(point4.getX()));
 			points.append(",");
@@ -111,8 +112,8 @@ public class SVG3DFaceGenerator extends AbstractSVGSAXGenerator {
 		}
 	}
 
-	protected void edgeToSAX(ContentHandler handler, Point p1, Point p2,
-			Map svgContext, DXF3DFace face) throws SAXException {
+	protected void edgeToSAX(ContentHandler handler, Point3D p1, Point3D p2,
+			Map svgContext, Face3D face) throws SAXException {
 		AttributesImpl attr = new AttributesImpl();
 		// set the attributes
 		SVGUtils.addAttribute(attr, SVGConstants.SVG_ATTRIBUTE_X1, SVGUtils

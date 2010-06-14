@@ -1,45 +1,39 @@
-/*
-   Copyright 2009 Simon Mieth
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
 package org.kabeja.parser.xml;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import org.kabeja.dxf.DXFDocument;
-import org.kabeja.parser.DXFParser;
-import org.kabeja.parser.Handler;
-import org.kabeja.parser.HandlerManager;
+import org.kabeja.DraftDocument;
 import org.kabeja.parser.ParseException;
 import org.kabeja.parser.Parser;
 import org.xml.sax.Attributes;
-import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 public abstract class AbstractSAXParser extends DefaultHandler implements
-        Parser, HandlerManager {
+        Parser {
 
-    protected DXFDocument doc;
+    protected DraftDocument doc;
 
     protected Map nsHandlers = new HashMap();
 
@@ -71,36 +65,9 @@ public abstract class AbstractSAXParser extends DefaultHandler implements
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.kabeja.parser.Handler#releaseDXFDocument()
-     */
-    public void releaseDXFDocument() {
 
-        this.doc = null;
 
-    }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.kabeja.parser.Handler#setDXFDocument(org.kabeja.dxf.DXFDocument)
-     */
-    public void setDXFDocument(DXFDocument doc) {
-        this.doc = doc;
-
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.kabeja.parser.Parser#getDocument()
-     */
-    public DXFDocument getDocument() {
-
-        return this.doc;
-    }
 
     /*
      * (non-Javadoc)
@@ -108,45 +75,40 @@ public abstract class AbstractSAXParser extends DefaultHandler implements
      * @see org.kabeja.parser.Parser#parse(java.io.InputStream,
      * java.lang.String)
      */
-    public void parse(InputStream input, String encoding) throws ParseException {
+    public void parse(InputStream input,DraftDocument doc, Map properties) throws ParseException {
         SAXParserFactory factory = SAXParserFactory.newInstance();
         try {
             factory.setNamespaceAware(true);
+            
             SAXParser parser = factory.newSAXParser();
             // start parsing
+            this.doc =doc;
             parser.parse(input, this);
-
+           
         } catch (Exception e) {
             throw new ParseException(e);
 
         }
+ 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.kabeja.parser.Parser#parse(java.lang.String, java.lang.String)
-     */
-    public void parse(String file, String encoding) throws ParseException {
-        try {
-            parse(new FileInputStream(file), encoding);
-        } catch (FileNotFoundException e) {
-            throw new ParseException(e);
-        }
+  
 
-    }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.kabeja.parser.Parser#parse(java.lang.String)
-     */
-    public void parse(String file) throws ParseException {
-        parse(file, DXFParser.DEFAULT_ENCODING);
+    /* (non-Javadoc)
+	 * @see org.kabeja.parser.Parser#parse(java.io.InputStream, java.util.Map)
+	 */
+	public DraftDocument parse(InputStream in, Map properties)
+			throws ParseException {
+		parse(in, new DraftDocument(), properties);
+		return this.doc;
+	}
 
-    }
 
-    /*
+
+
+
+	/*
      * (non-Javadoc)
      * 
      * @see org.xml.sax.helpers.DefaultHandler#characters(char[], int, int)
@@ -167,6 +129,7 @@ public abstract class AbstractSAXParser extends DefaultHandler implements
     public void endElement(String uri, String localName, String name)
             throws SAXException {
         if (this.captureEvent) {
+
             this.currentHandler.endParseElement(uri, localName, this.context);
             if (this.currentHandler.getNamespaceHandle().equals(uri) && this.currentHandler.getElementNameHandle().equals(localName)) {
                 this.captureEvent = false;
@@ -180,7 +143,7 @@ public abstract class AbstractSAXParser extends DefaultHandler implements
                 this.throughXMLHandler=false;
             }
             
-        }if (nsHandlers.containsKey(uri)) {
+        }else if (nsHandlers.containsKey(uri)) {
             Map handlers = (Map) nsHandlers.get(uri);
             if (handlers.containsKey(localName)) {
                 this.currentHandler = (XMLHandler) handlers.get(localName);
@@ -232,11 +195,6 @@ public abstract class AbstractSAXParser extends DefaultHandler implements
     
 
     public void startDocument() throws SAXException {
-        // check if a DXFDocument was given
-        // before
-        if (this.getDocument() == null) {
-            this.setDXFDocument(new DXFDocument());
-        }
         this.context = new ParsingContext(this.doc);
     }
 

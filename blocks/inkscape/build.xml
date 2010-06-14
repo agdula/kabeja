@@ -2,7 +2,6 @@
 <project name="Inkscape-ImportFilter" default="dist" basedir=".">
 	<property name="homepath" value="" />
 	<property name="block.releasename" value="kabeja-inkscape-dxf2svg" />
-	<property name="releaseversion" value="0.4" />
 	<property name="src" value="src" />
 	<property name="sources" value="java" />
 	<property name="classes" value="classes" />
@@ -53,7 +52,8 @@
 				<echo>Native import filter</echo>
 
 				<exec executable="gcj">
-					<arg line=" ${inkscape.java.compiler.properties} --main=${main.class} -o ${basedir}/${dist}/${name.binary} ${basedir}/${dist}/${block.releasename}.jar" />
+					<arg
+						line=" ${inkscape.java.compiler.properties} --main=${main.class} -o ${basedir}/${dist}/${name.binary} ${basedir}/${dist}/${block.releasename}.jar" />
 				</exec>
 			</then>
 		</if>
@@ -67,8 +67,9 @@
 			<equals arg1="${inkscape.importfilter.type}" arg2="mono" />
 			<then>
 				<echo>Mono DotNet import filter</echo>
-				<exec executable="ikvmc"> 
-					<arg line="-target:exe -main:${main.class} -out:&quot;${basedir}/${dist}/${name.binary}.exe&quot;  &quot;${basedir}/${dist}/${block.releasename}.jar&quot;" />
+				<exec executable="ikvmc">
+					<arg
+						line="-target:exe -main:${main.class} -out:&quot;${basedir}/${dist}/${name.binary}.exe&quot;  &quot;${basedir}/${dist}/${block.releasename}.jar&quot;" />
 				</exec>
 			</then>
 		</if>
@@ -89,21 +90,25 @@
 							<arg line="${dist}/${name.binary}.exe" />
 						</exec>
 						<copy file="${dist}/${name.binary}.exe" todir="${kabeja.home}/${dist}/inkscape-extension" />
-						<chmod file="${kabeja.home}/${dist}/inkscape-extension/${name.binary}.exe" perm="+rx" />
+						<chmod
+							file="${kabeja.home}/${dist}/inkscape-extension/${name.binary}.exe"
+							perm="+rx" />
 					</then>
 					<else>
 						<exec executable="strip">
 							<arg line="${dist}/${name.binary}" />
 						</exec>
 						<copy file="${dist}/${name.binary}" todir="${kabeja.home}/${dist}/inkscape-extension" />
-						<chmod file="${kabeja.home}/${dist}/inkscape-extension/${name.binary}" perm="+rx" />
+						<chmod file="${kabeja.home}/${dist}/inkscape-extension/${name.binary}"
+							perm="+rx" />
 					</else>
 
 
 
 				</if>
 
-				<copy file="${conf}/kabeja-native.inx" tofile="${kabeja.home}/${dist}/inkscape-extension/kabeja.inx" />
+				<copy file="${conf}/kabeja-native.inx"
+					tofile="${kabeja.home}/${dist}/inkscape-extension/kabeja.inx" />
 			</then>
 		</if>
 		<if>
@@ -111,27 +116,36 @@
 			<then>
 				<copy file="${dist}/${block.releasename}.jar" todir="${kabeja.home}/${dist}/inkscape-extension" />
 				<copy file="${conf}/kabeja.sh" tofile="${kabeja.home}/${dist}/inkscape-extension/kabeja" />
-				<chmod file="${kabeja.home}/${dist}/inkscape-extension/kabeja" perm="+rx" />
+				<chmod file="${kabeja.home}/${dist}/inkscape-extension/kabeja"
+					perm="+rx" />
 				<copy file="${conf}/kabeja.bat" todir="${kabeja.home}/${dist}/inkscape-extension" />
-				<copy file="${conf}/kabeja-java.inx" tofile="${kabeja.home}/${dist}/inkscape-extension/kabeja.inx" />
+				<copy file="${conf}/kabeja-java.inx"
+					tofile="${kabeja.home}/${dist}/inkscape-extension/kabeja.inx" />
 			</then>
 		</if>
 		<if>
 			<equals arg1="${inkscape.importfilter.type}" arg2="mono" />
 			<then>
 				<copy file="${dist}/${name.binary}.exe" todir="${kabeja.home}/${dist}/inkscape-extension" />
-				<chmod file="${kabeja.home}/${dist}/inkscape-extension/${name.binary}.exe" perm="+rx" />
-				<copy file="${conf}/kabeja-mono.inx" tofile="${kabeja.home}/${dist}/inkscape-extension/kabeja.inx" />
-				<copy file="${conf}/kabeja-mono.sh" tofile="${kabeja.home}/${dist}/inkscape-extension/${name.binary}" />
-				<chmod file="${kabeja.home}/${dist}/inkscape-extension/${name.binary}" perm="+rx" />
+				<chmod
+					file="${kabeja.home}/${dist}/inkscape-extension/${name.binary}.exe"
+					perm="+rx" />
+				<copy file="${conf}/kabeja-mono.inx"
+					tofile="${kabeja.home}/${dist}/inkscape-extension/kabeja.inx" />
+				<copy file="${conf}/kabeja-mono.sh"
+					tofile="${kabeja.home}/${dist}/inkscape-extension/${name.binary}" />
+				<chmod file="${kabeja.home}/${dist}/inkscape-extension/${name.binary}"
+					perm="+rx" />
 			</then>
 		</if>
-		
-		<jar jarfile="${kabeja.home}/${dist}/${libs}/${block.releasename}-${releaseversion}.jar" manifest="${manifest}">
-				<fileset dir="${build}/${classes}">
-					<include name="**/*" />
-				</fileset>
-	    </jar>	
+
+		<jar
+			jarfile="${kabeja.home}/${dist}/${libs}/${block.releasename}-${releaseversion}.jar"
+			manifest="${manifest}">
+			<fileset dir="${build}/${classes}">
+				<include name="**/*" />
+			</fileset>
+		</jar>
 	</target>
 
 
@@ -148,7 +162,7 @@
 			<exclude name="**/CVS/*" />
 		</javac>
 
-		<mkdir dir="${build}/svg"/>
+		<mkdir dir="${build}/svg" />
 		<unjar dest="${build}/svg">
 			<fileset dir="${kabeja.home}/${dist}/${libs}">
 				<include name="**/kabeja-svg*.jar" />
@@ -158,7 +172,7 @@
 			<fileset dir="${kabeja.home}/${build}/${classes}">
 				<exclude name="org/kabeja/ui/**/*" />
 				<exclude name="org/kabeja/*" />
-				<!--	  -->
+				<!-- -->
 				<include name="**/*" />
 			</fileset>
 			<fileset dir="${build}/svg">
@@ -198,7 +212,8 @@
 				<copy file="${conf}/kabeja-native.inx" tofile="${install.dir}/kabeja.inx" />
 			</then>
 			<else>
-				<jar jarfile="${install.dir}/${block.releasename}.jar" basedir="${build}/${classes}" includes="**/*" manifest="${manifest}" />
+				<jar jarfile="${install.dir}/${block.releasename}.jar" basedir="${build}/${classes}"
+					includes="**/*" manifest="${manifest}" />
 				<if>
 					<os family="windows" />
 					<then>
@@ -233,7 +248,8 @@
 	<target name="javadoc">
 		<mkdir dir="${build}" />
 		<mkdir dir="${build}/${apidocs}" />
-		<javadoc packagenames="*.*.*" sourcepath="${src}/${sources}" destdir="${kabeja.home}/${build}/${apidocs}">
+		<javadoc packagenames="*.*.*" sourcepath="${src}/${sources}"
+			destdir="${kabeja.home}/${build}/${apidocs}">
 			<classpath>
 				<pathelement path="${classpath}" />
 				<fileset dir="${libs}">

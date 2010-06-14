@@ -1,32 +1,33 @@
-/*
-   Copyright 2008 Simon Mieth
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
- */
 package org.kabeja.processing;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-import org.kabeja.dxf.DXFBlock;
-import org.kabeja.dxf.DXFDocument;
-import org.kabeja.dxf.DXFEntity;
-import org.kabeja.dxf.DXFLayer;
+import org.kabeja.DraftDocument;
+import org.kabeja.common.Block;
+import org.kabeja.common.DraftEntity;
+import org.kabeja.common.Layer;
+import org.kabeja.common.Type;
+import org.kabeja.entities.Entity;
 
 public class LayerFilter extends AbstractPostProcessor {
 	public final static String PROPERTY_REMOVE_LAYERS = "layers.remove";
@@ -36,7 +37,7 @@ public class LayerFilter extends AbstractPostProcessor {
 	protected boolean merge = false;
 	protected boolean removeEmptyLayer = false;
 
-	protected Set removableLayers = new HashSet();
+	protected Set<String> removableLayers = new HashSet<String>();
 
 	public void setProperties(Map properties) {
 		super.setProperties(properties);
@@ -64,58 +65,51 @@ public class LayerFilter extends AbstractPostProcessor {
 		}
 	}
 
-	public void process(DXFDocument doc, Map context) throws ProcessorException {
-		DXFLayer mergeLayer = null;
+	public void process(DraftDocument doc, Map context) throws ProcessorException {
+		Layer mergeLayer = null;
 
 		if (this.merge) {
-			if (doc.containsDXFLayer(MERGED_LAYER_NAME)) {
-				mergeLayer = doc.getDXFLayer(MERGED_LAYER_NAME);
+			if (doc.containsLayer(MERGED_LAYER_NAME)) {
+				mergeLayer = doc.getLayer(MERGED_LAYER_NAME);
 			} else {
-				mergeLayer = new DXFLayer();
+				mergeLayer = new Layer();
 				mergeLayer.setName(MERGED_LAYER_NAME);
-				doc.addDXFLayer(mergeLayer);
+				doc.addLayer(mergeLayer);
 			}
 		}
 		// check if the remove layer
 
-		Set blockLayer = new HashSet();
-		Iterator blockIterator = doc.getDXFBlockIterator();
-		while (blockIterator.hasNext()) {
-			DXFBlock block = (DXFBlock) blockIterator.next();
-			Iterator entityIterator = block.getDXFEntitiesIterator();
-			while (entityIterator.hasNext()) {
-				blockLayer.add(((DXFEntity)entityIterator.next()).getLayerName());
+		Set<String> blockLayer = new HashSet<String>();
+	for(Block block :doc.getBlocks()){
+		for(DraftEntity e:block.getEntities()){
+				blockLayer.add(e.getLayer().getName());
 			}
 		}
 
 		// iterate over all layers
-		Iterator i = doc.getDXFLayerIterator();
+		Iterator<Layer> i = doc.getLayers().iterator();
 		int count = 0;
 		while (i.hasNext()) {
-			DXFLayer layer = (DXFLayer) i.next();
+			Layer layer = (Layer) i.next();
 			count++;
 
 			if (this.removableLayers.contains(layer.getName())) {
 				i.remove();
 			} else if (this.merge) {
 				if (layer != mergeLayer) {
-					Iterator types = layer.getDXFEntityTypeIterator();
-
-					while (types.hasNext()) {
-						String type = (String) types.next();
-						Iterator entityIterator = layer.getDXFEntities(type)
+				for(Type<?> type :layer.getEntityTypes()){
+						Iterator<?> entityIterator = layer.getEntitiesByType(type)
 								.iterator();
-
 						while (entityIterator.hasNext()) {
-							DXFEntity e = (DXFEntity) entityIterator.next();
+							Entity e = (Entity) entityIterator.next();
 							// we set all entities to the merged layer
 							// and remove them from the last layer
-							e.setLayerName(MERGED_LAYER_NAME);
+							e.setLayer(mergeLayer);
 
 							// set again to the doc, which will
 							// place the entity on the right
 							// layer -> the LAYER = "ALL"
-							doc.addDXFEntity(e);
+							doc.addEntity(e);
 							entityIterator.remove();
 						}
 					}

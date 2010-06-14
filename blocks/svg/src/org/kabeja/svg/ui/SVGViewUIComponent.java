@@ -1,3 +1,18 @@
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 /*
    Copyright 2007 Simon Mieth
 
@@ -51,32 +66,32 @@ import org.apache.batik.swing.svg.GVTTreeBuilderAdapter;
 import org.apache.batik.swing.svg.GVTTreeBuilderEvent;
 import org.apache.batik.swing.svg.SVGDocumentLoaderAdapter;
 import org.apache.batik.swing.svg.SVGDocumentLoaderEvent;
-import org.kabeja.dxf.DXFDocument;
+import org.kabeja.DraftDocument;
 import org.kabeja.svg.SVGGenerator;
 import org.kabeja.svg.action.CanvasUpdateRunnable;
 import org.kabeja.svg.action.CustomActionView;
-import org.kabeja.svg.action.DXFDocumentAction;
+import org.kabeja.svg.action.DraftDocumentAction;
 import org.kabeja.svg.action.GroupAction;
 import org.kabeja.svg.action.GroupActionUnSelector;
 import org.kabeja.svg.action.JSVGCanvasAction;
 import org.kabeja.svg.action.SVGDocumentAction;
 import org.kabeja.svg.action.ViewerAction;
-import org.kabeja.svg.tools.DXFSAXDocumentFactory;
-import org.kabeja.ui.DXFDocumentViewComponent;
+import org.kabeja.svg.tools.DraftSAXDocumentFactory;
+import org.kabeja.ui.DraftDocumentViewComponent;
 import org.kabeja.ui.JToggleButtonGroup;
 import org.kabeja.ui.PropertiesEditor;
 import org.kabeja.ui.PropertiesListener;
 import org.kabeja.ui.ServiceManager;
 import org.kabeja.ui.Serviceable;
 import org.kabeja.ui.UIException;
-import org.kabeja.ui.event.DXFDocumentChangeEventProvider;
-import org.kabeja.ui.event.DXFDocumentChangeListener;
+import org.kabeja.ui.event.DraftDocumentChangeEventProvider;
+import org.kabeja.ui.event.DraftDocumentChangeListener;
 import org.w3c.dom.svg.SVGDocument;
 import org.w3c.dom.svg.SVGMatrix;
 
 
-public class SVGViewUIComponent implements DXFDocumentViewComponent,
-    Serviceable, DXFDocumentChangeListener,
+public class SVGViewUIComponent implements DraftDocumentViewComponent,
+    Serviceable, DraftDocumentChangeListener,
     org.kabeja.svg.action.CanvasUpdateManager, PropertiesListener {
     protected boolean initialized = false;
     protected JSVGCanvas canvas;
@@ -90,7 +105,7 @@ public class SVGViewUIComponent implements DXFDocumentViewComponent,
             "Modelspace-Calculated", "Modelspace", "Paperspace Calculated",
             "Paperspace", "Mixed"
         };
-    protected DXFDocument doc;
+    protected DraftDocument doc;
     protected JComboBox switchViewBox;
     protected JToolBar toolbar;
     protected Map properties = new HashMap();
@@ -218,7 +233,7 @@ public class SVGViewUIComponent implements DXFDocumentViewComponent,
         return this.parentPanel;
     }
 
-    public void showDXFDocument(DXFDocument doc) throws UIException {
+    public void showDraftDocument(DraftDocument doc) throws UIException {
         this.doc = doc;
         this.properties.clear();
 
@@ -230,21 +245,21 @@ public class SVGViewUIComponent implements DXFDocumentViewComponent,
         while (i.hasNext()) {
             Object obj = i.next();
 
-            if (obj instanceof DXFDocumentAction) {
-                ((DXFDocumentAction) obj).setDXFDocument(doc);
+            if (obj instanceof DraftDocumentAction) {
+                ((DraftDocumentAction) obj).setDXFDocument(doc);
             }
         }
 
         this.updateView(doc);
     }
 
-    protected void updateView(DXFDocument doc) throws UIException {
+    protected void updateView(DraftDocument doc) throws UIException {
         try {
             this.infoLabel.setText("Starting ...");
             this.infoLabel.repaint();
             this.cards.show(this.panel, "info");
 
-            DXFSAXDocumentFactory factory = new DXFSAXDocumentFactory();
+            DraftSAXDocumentFactory factory = new DraftSAXDocumentFactory();
             SVGDocument svgDoc = factory.createDocument(doc, this.properties);
             this.setSVGDocument(svgDoc);
   
@@ -258,10 +273,10 @@ public class SVGViewUIComponent implements DXFDocumentViewComponent,
     }
 
     public void setServiceManager(ServiceManager manager) {
-        org.kabeja.tools.Component[] obj = manager.getServiceComponents(DXFDocumentChangeEventProvider.SERVICE);
+        Object[] obj = manager.getServiceComponents(DraftDocumentChangeEventProvider.SERVICE);
 
         for (int i = 0; i < obj.length; i++) {
-            ((DXFDocumentChangeEventProvider) obj[i]).addDXFDocumentChangeListener(this);
+            ((DraftDocumentChangeEventProvider) obj[i]).addDraftDocumentChangeListener(this);
         }
 
         // the actions
@@ -274,7 +289,7 @@ public class SVGViewUIComponent implements DXFDocumentViewComponent,
         this.registerActions();
     }
 
-    public void changed(DXFDocument doc) {
+    public void changed(DraftDocument doc) {
         try {
             this.updateView(doc);
         } catch (UIException e) {
@@ -342,8 +357,8 @@ public class SVGViewUIComponent implements DXFDocumentViewComponent,
                 ((JSVGCanvasAction) action).setJSVGCanvas(this.canvas);
             }
 
-            if ((this.doc != null) && action instanceof DXFDocumentAction) {
-                ((DXFDocumentAction) action).setDXFDocument(this.doc);
+            if ((this.doc != null) && action instanceof DraftDocumentAction) {
+                ((DraftDocumentAction) action).setDXFDocument(this.doc);
             }
         }
     }

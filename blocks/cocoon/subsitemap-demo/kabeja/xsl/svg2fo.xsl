@@ -1,7 +1,13 @@
 <?xml version="1.0"?>
+<!-- Copyright 2010 Simon Mieth Licensed under the Apache License, Version 
+	2.0 (the "License"); you may not use this file except in compliance with 
+	the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 
+	Unless required by applicable law or agreed to in writing, software distributed 
+	under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES 
+	OR CONDITIONS OF ANY KIND, either express or implied. See the License for 
+	the specific language governing permissions and limitations under the License. -->
 <xsl:stylesheet version="1.0"
-	xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-	xmlns:fo="http://www.w3.org/1999/XSL/Format"
+	xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:fo="http://www.w3.org/1999/XSL/Format"
 	xmlns:svg="http://www.w3.org/2000/svg">
 
 	<xsl:template match="/">
@@ -11,8 +17,7 @@
 				<fo:simple-page-master master-name="page"
 					page-height="29.7cm" page-width="21cm" margin-top="2cm"
 					margin-bottom="2cm" margin-left="3cm" margin-right="3cm">
-					<fo:region-body margin-top="2cm"
-						margin-bottom="3cm" />
+					<fo:region-body margin-top="2cm" margin-bottom="3cm" />
 					<fo:region-before extent="2.5cm" />
 					<fo:region-after extent="2cm" />
 				</fo:simple-page-master>
@@ -42,11 +47,11 @@
 		<fo:block font-size="18pt" space-before.optimum="18pt">
 			DXF Draft
 		</fo:block>
-		<fo:block width="100%" border="0.1px solid gray" background-color="rgb(242,242,242)"
-			padding="5pt">
+		<fo:block width="100%" border="0.1px solid gray"
+			background-color="rgb(242,242,242)" padding="5pt">
 			<fo:instream-foreign-object content-width="15cm"
-				width="16cm"  scaling="uniform"
-				display-align="center" content-height="scale-to-fit" >
+				width="16cm" scaling="uniform" display-align="center"
+				content-height="scale-to-fit">
 				<svg:svg width="15cm" height="10cm">
 
 					<!-- this is a workaround otherwise the viewbox will not applied -->
@@ -61,10 +66,10 @@
 			Draft data
 		</fo:block>
 		<fo:block font-size="11pt">
-			This section lists some data of the draft file.
+			This section lists some data of the draft
+			file.
 		</fo:block>
-		<fo:block font-size="18pt" space-before="5mm"
-			space-after="5mm">
+		<fo:block font-size="18pt" space-before="5mm" space-after="5mm">
 			List of layers
 		</fo:block>
 		<fo:block>
@@ -79,8 +84,7 @@
 			</xsl:for-each>
 		</fo:block>
 		<fo:block page-break-before="true">
-			<fo:block font-size="18pt" space-before="5mm"
-				space-after="5mm">
+			<fo:block font-size="18pt" space-before="5mm" space-after="5mm">
 				List of blocks
 			</fo:block>
 			<fo:block>
@@ -108,12 +112,12 @@
 						font-weight="bold" color="#6596c6" text-align="start">
 						Kabeja DXF2SVG
 
-						<fo:leader leader-pattern="none"
-							leader-pattern-width="8pt" leader-alignment="reference-area" />
+						<fo:leader leader-pattern="none" leader-pattern-width="8pt"
+							leader-alignment="reference-area" />
 					</fo:inline>
 
-					<fo:inline color="black" text-align="right"
-						font-size="8pt" font-style="italic">
+					<fo:inline color="black" text-align="right" font-size="8pt"
+						font-style="italic">
 						Example
 					</fo:inline>
 				</fo:block>

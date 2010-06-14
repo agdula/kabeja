@@ -1,25 +1,26 @@
-/*
-   Copyright 2008 Simon Mieth
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
 package org.kabeja.svg.generators;
 
 import java.util.Map;
 
-import org.kabeja.dxf.DXFEllipse;
-import org.kabeja.dxf.DXFEntity;
-import org.kabeja.math.Point;
+import org.kabeja.common.DraftEntity;
+import org.kabeja.entities.Ellipse;
+import org.kabeja.math.Point3D;
 import org.kabeja.math.TransformContext;
 import org.kabeja.svg.SVGConstants;
 import org.kabeja.svg.SVGPathBoundaryGenerator;
@@ -31,15 +32,15 @@ import org.xml.sax.helpers.AttributesImpl;
 
 public class SVGEllipseGenerator extends AbstractSVGSAXGenerator
     implements SVGPathBoundaryGenerator {
-    public void toSAX(ContentHandler handler, Map svgContext, DXFEntity entity,
+    public void toSAX(ContentHandler handler, Map svgContext, DraftEntity entity,
         TransformContext transformContext) throws SAXException {
-        DXFEllipse ellipse = (DXFEllipse) entity;
+        Ellipse ellipse = (Ellipse) entity;
 
         AttributesImpl attr = new AttributesImpl();
         super.setCommonAttributes(attr, svgContext, ellipse);
 
-        if ((ellipse.getStartParameter() == DXFEllipse.DEFAULT_START_PARAMETER) &&
-                (ellipse.getEndParameter() == DXFEllipse.DEFAULT_END_PARAMETER)) {
+        if ((ellipse.getStartParameter() == Ellipse.DEFAULT_START_PARAMETER) &&
+                (ellipse.getEndParameter() == Ellipse.DEFAULT_END_PARAMETER)) {
             SVGUtils.addAttribute(attr, "cx",
                 SVGUtils.formatNumberAttribute(ellipse.getCenterPoint().getX()));
             SVGUtils.addAttribute(attr, "cy",
@@ -77,13 +78,13 @@ public class SVGEllipseGenerator extends AbstractSVGSAXGenerator
         }
     }
 
-    public String getSVGPath(DXFEntity entity) {
-        DXFEllipse ellipse = (DXFEllipse) entity;
+    public String getSVGPath(DraftEntity entity) {
+        Ellipse ellipse = (Ellipse) entity;
 
         StringBuffer buf = new StringBuffer();
 
-        Point start = ellipse.getPointAt(ellipse.getStartParameter());
-        Point end = ellipse.getPointAt(ellipse.getEndParameter());
+        Point3D start = ellipse.getPointAt(ellipse.getStartParameter());
+        Point3D end = ellipse.getPointAt(ellipse.getEndParameter());
 
         buf.append("M ");
         buf.append(SVGUtils.formatNumberAttribute(start.getX()));
@@ -102,8 +103,8 @@ public class SVGEllipseGenerator extends AbstractSVGSAXGenerator
         // rotation value of the ellipse
         buf.append(SVGUtils.formatNumberAttribute(Math.toDegrees(angle)));
 
-        if ((ellipse.getStartParameter() == DXFEllipse.DEFAULT_START_PARAMETER) &&
-                (ellipse.getEndParameter() == DXFEllipse.DEFAULT_END_PARAMETER)) {
+        if ((ellipse.getStartParameter() == Ellipse.DEFAULT_START_PARAMETER) &&
+                (ellipse.getEndParameter() == Ellipse.DEFAULT_END_PARAMETER)) {
             // drawing a full ellipse -> from start point to half
             // and then back
 

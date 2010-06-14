@@ -1,30 +1,31 @@
-/*
-   Copyright 2008 Simon Mieth
+/*******************************************************************************
+ * Copyright 2010 Simon Mieth
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
 package org.kabeja.math;
 
 
 
 public class NURBS {
-    protected Point[] controlPoints;
+    protected Point3D[] controlPoints;
     protected double[] knots;
     protected double[] weights;
     protected int degree;
     protected boolean closed = false;
 
-    public NURBS(Point[] controlPoints, double[] knots, double[] weights,
+    public NURBS(Point3D[] controlPoints, double[] knots, double[] weights,
         int degree) {
         this.controlPoints = controlPoints;
 
@@ -69,8 +70,8 @@ public class NURBS {
         return n;
     }
 
-    public Point getPointAt(int i, double u) {
-        Point p = new Point();
+    public Point3D getPointAt(int i, double u) {
+        Point3D p = new Point3D();
         double[] n = this.getBasicFunctions(i, u);
 
         double t = 0.0;
@@ -92,7 +93,7 @@ public class NURBS {
         return p;
     }
 
-    public Point getPointAt(double u) {
+    public Point3D getPointAt(double u) {
         int interval = this.findSpawnIndex(u);
 
         return this.getPointAt(interval, u);
@@ -120,11 +121,11 @@ public class NURBS {
         return mid;
     }
 
-    public Point[] getControlPoints() {
+    public Point3D[] getControlPoints() {
         return controlPoints;
     }
 
-    public void setControlPoints(Point[] controlPoints) {
+    public void setControlPoints(Point3D[] controlPoints) {
         this.controlPoints = controlPoints;
     }
 
