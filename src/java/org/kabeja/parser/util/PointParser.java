@@ -45,7 +45,7 @@ public class PointParser {
 	private char numberSeparator='.';
 	private  char separator=' ';
 	private char numberGrouping=',';
-    private List points = new ArrayList();
+    private List<Point3D> points = new ArrayList<Point3D>();
 	private Point3D currentPoint=new Point3D();
 	 
 	
@@ -128,11 +128,11 @@ public class PointParser {
 
 	
 	
-	public Iterator getPointIterator(){
+	public List<Point3D> getPoints(){
 	    //flush buffer
 	    parse(new char[]{separator},0,1);
 	    state=STATE_NUMBER;
-		return this.points.iterator();
+		return this.points;
 	}
 	
 	
@@ -142,7 +142,6 @@ public class PointParser {
 	private void parse(char[] c,int start,int length){
 	    int end = start+length;
 	    for(int i=start;i<end;i++){
-	        char dt = c[i];
 	       
 	        if(Character.isDigit(c[i])){
 	         
@@ -163,9 +162,7 @@ public class PointParser {
 	        }else{
 	        
 	            state = STATE_SEPARATOR;
-	            if(this.pointString.length()>0){
-	                //System.out.println("eval buffer:"+this.pointString.toString());
-                   
+	            if(this.pointString.length()>0){   
 	                try {
                         double d = Double.parseDouble(this.pointString.toString());
                         this.pointString.delete(0,this.pointString.length());
@@ -209,25 +206,5 @@ public class PointParser {
 	    this.points.clear();
 	}
 	
-	
-	
-	
-	public static void main(String[] args){
-	    
-	    String pointString="1512551.10509471";
-		PointParser parser = new PointParser();
-		parser.setCoordinateType(PointParser.COORDINATE_FORMAT_2D);
-		parser.appendPointString(pointString);
-		parser.appendPointString(" 5041237.15842429");
-		parser.appendPointString("01 11.");
-		Iterator i = parser.getPointIterator();
-		while(i.hasNext()){
-		Point3D p = (Point3D)i.next();
-		System.out.println(p);
-		}
-		
-		
-	}
-
 
 }
