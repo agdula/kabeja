@@ -46,6 +46,8 @@ public class DXFParser implements HandlerManager, Handler, Parser, DXFHandler {
     private final static String END_STREAM = "EOF";
     private final static int COMMAND_CODE = 0;
     public static final String DEFAULT_ENCODING = "";
+    public static final String FALLBACK_ENCODING_DETECTION_BUFFER_SIZE = "org.kabeja.parser.DXFParser.fallbackEncodingDetectionBufferSize";
+    public static int FALLBACK_ENCODING_DETECTION_BUFFER_SIZE_BYTES = Integer.parseInt(System.getProperty(FALLBACK_ENCODING_DETECTION_BUFFER_SIZE, "" + (1024 * 1024)));
     protected DXFDocument doc;
     protected Hashtable handlers = new Hashtable();
     protected DXFSectionHandler currentHandler;
@@ -108,7 +110,7 @@ public class DXFParser implements HandlerManager, Handler, Parser, DXFHandler {
         try {
             if ("".equals(encoding)) {
                 BufferedInputStream buf = new BufferedInputStream(input);
-                buf.mark(9000);
+                buf.mark(FALLBACK_ENCODING_DETECTION_BUFFER_SIZE_BYTES);
 
                 try {
                     BufferedReader r = new BufferedReader(new InputStreamReader(
@@ -119,7 +121,12 @@ public class DXFParser implements HandlerManager, Handler, Parser, DXFHandler {
 
                     in = new BufferedReader(new InputStreamReader(buf, encoding));
                 } catch (IOException e1) {
-                    buf.reset();
+                    try {
+                        buf.reset();
+                    } catch (IOException e){
+                        throw new ParseException("Unable to recover after trying to determine stream encoding." +
+                                " Increase the size ("+FALLBACK_ENCODING_DETECTION_BUFFER_SIZE+" bytes) of fallback buffer size by setting '"+FALLBACK_ENCODING_DETECTION_BUFFER_SIZE+"' System property to a bigger value. " + encoding,e1);
+                    }
                     in = new BufferedReader(new InputStreamReader(buf));
                 }
             } else {
@@ -153,9 +160,9 @@ public class DXFParser implements HandlerManager, Handler, Parser, DXFHandler {
                 currentHandler.endSection();
             }
         } catch (FileNotFoundException e) {
-            throw new ParseException(e.toString());
+            throw new ParseException(e.toString(),e);
         } catch (IOException ioe) {
-            throw new ParseException(ioe.toString());
+            throw new ParseException(ioe.toString(),ioe);
         }
     }
 
